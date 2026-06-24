@@ -1,0 +1,195 @@
+// Component Location Section - Hiển thị địa điểm và bản đồ
+import { motion } from 'framer-motion';
+import { MapPin, Navigation, Calendar, ExternalLink } from 'lucide-react';
+import { EVENT_INFO } from '../data/eventData';
+
+// Tạo link thêm vào Google Calendar
+function getGoogleCalendarUrl(): string {
+  const title = encodeURIComponent(`Lễ Tốt Nghiệp - ${EVENT_INFO.name}`);
+  const details = encodeURIComponent(`Trân trọng kính mời tham dự Lễ Tốt Nghiệp Đại Học của ${EVENT_INFO.name}`);
+  const location = encodeURIComponent(EVENT_INFO.venue + ', ' + EVENT_INFO.address);
+
+  // Format ngày tháng cho Google Calendar: YYYYMMDDTHHMMSS
+  const startDate = '20260711T133000'; // ⚠️ THAY NĂM nếu cần
+  const endDate = '20260711T170000';   // ⚠️ THAY NĂM nếu cần
+
+  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&details=${details}&location=${location}&dates=${startDate}%2F${endDate}`;
+}
+
+// Tạo file ICS để thêm vào lịch Apple/Outlook
+function downloadICSFile() {
+  const icsContent = `BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Graduation Invitation//VI
+BEGIN:VEVENT
+DTSTART:20260711T063000Z
+DTEND:20260711T100000Z
+SUMMARY:Lễ Tốt Nghiệp - ${EVENT_INFO.name}
+DESCRIPTION:Trân trọng kính mời tham dự Lễ Tốt Nghiệp Đại Học của ${EVENT_INFO.name}
+LOCATION:${EVENT_INFO.venue}, ${EVENT_INFO.address}
+STATUS:CONFIRMED
+END:VEVENT
+END:VCALENDAR`;
+
+  const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'le-tot-nghiep-bui-do-tan-hung.ics';
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+export default function LocationSection() {
+  return (
+    <section id="location" className="section-padding relative z-10">
+      <div className="max-w-5xl mx-auto">
+
+        {/* Tiêu đề */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8 }}
+          className="text-center mb-12"
+        >
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <MapPin className="w-5 h-5 text-gold-400" />
+            <span className="text-gold-400 text-sm font-medium tracking-widest uppercase">Địa Điểm Tổ Chức</span>
+            <MapPin className="w-5 h-5 text-gold-400" />
+          </div>
+          <h2 className="section-title mb-4">
+            <span className="gold-text">Nơi Diễn Ra</span>
+            <br />
+            <span className="text-white text-2xl md:text-3xl">Lễ Tốt Nghiệp</span>
+          </h2>
+        </motion.div>
+
+        {/* Grid: Thông tin bên trái + Bản đồ bên phải */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+          {/* Card thông tin địa điểm */}
+          <motion.div
+            initial={{ opacity: 0, x: -40 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+            className="glass-card gold-border rounded-3xl p-8 flex flex-col gap-6"
+          >
+            {/* Tên trường */}
+            <div className="flex items-start gap-4">
+              <div className="glass-card-light rounded-xl p-3 shrink-0">
+                <MapPin className="w-6 h-6 text-gold-400" />
+              </div>
+              <div>
+                <p className="text-white/50 text-xs uppercase tracking-wider mb-1">Địa Điểm</p>
+                <h3 className="text-white font-serif font-bold text-lg leading-snug">
+                  {EVENT_INFO.venue}
+                </h3>
+                <p className="text-white/60 text-sm mt-1">{EVENT_INFO.address}</p>
+              </div>
+            </div>
+
+            {/* Thời gian */}
+            <div className="flex items-start gap-4">
+              <div className="glass-card-light rounded-xl p-3 shrink-0">
+                <Calendar className="w-6 h-6 text-gold-400" />
+              </div>
+              <div>
+                <p className="text-white/50 text-xs uppercase tracking-wider mb-1">Thời Gian</p>
+                <p className="text-white font-bold text-lg">
+                  {EVENT_INFO.startTime} – {EVENT_INFO.endTime}
+                </p>
+                <p className="text-gold-400 font-serif text-base">{EVENT_INFO.dateDisplay}</p>
+              </div>
+            </div>
+
+            {/* Đường kẻ trang trí */}
+            <div className="h-px bg-gradient-to-r from-transparent via-gold-500/30 to-transparent" />
+
+            {/* Nút hành động */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              {/* Thêm vào Google Calendar */}
+              <a
+                href={getGoogleCalendarUrl()}
+                target="_blank"
+                rel="noopener noreferrer"
+                id="btn-add-google-calendar"
+                className="btn-gold flex items-center justify-center gap-2 text-sm flex-1"
+                aria-label="Thêm vào Google Calendar"
+              >
+                <Calendar className="w-4 h-4" />
+                <span>Google Calendar</span>
+              </a>
+
+              {/* Thêm vào lịch (.ics) */}
+              <button
+                onClick={downloadICSFile}
+                id="btn-add-ics-calendar"
+                className="btn-glass flex items-center justify-center gap-2 text-sm flex-1"
+                aria-label="Tải file lịch .ics"
+              >
+                <Calendar className="w-4 h-4 text-gold-400" />
+                <span>Lịch Apple/Outlook</span>
+              </button>
+            </div>
+
+            {/* Nút chỉ đường */}
+            <a
+              href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(EVENT_INFO.venue)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              id="btn-get-directions"
+              className="flex items-center justify-center gap-2 text-gold-400 hover:text-gold-300 transition-colors text-sm font-medium"
+              aria-label="Xem chỉ đường trên Google Maps"
+            >
+              <Navigation className="w-4 h-4" />
+              <span>Xem chỉ đường trên Google Maps</span>
+              <ExternalLink className="w-3 h-3" />
+            </a>
+          </motion.div>
+
+          {/* Google Maps iframe */}
+          <motion.div
+            initial={{ opacity: 0, x: 40 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+            className="glass-card gold-border rounded-3xl overflow-hidden"
+            style={{ minHeight: '400px' }}
+          >
+            {/*
+              ⚠️ THAY ĐỔI: Bên dưới là iframe Google Maps của Trường Đại học An Giang
+              Để lấy iframe mới:
+              1. Vào Google Maps, tìm "Trường Đại học An Giang"
+              2. Click "Share" -> "Embed a map"
+              3. Sao chép code iframe và dán vào đây
+            */}
+            <iframe
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3920.0!2d105.4167!3d10.3833!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31a0e3f4d5c6e7a9%3A0x1234567890abcdef!2sTr%C6%B0%E1%BB%9Dng%20%C4%90%E1%BA%A1i%20h%E1%BB%8Dc%20An%20Giang!5e0!3m2!1svi!2svn!4v1234567890"
+              width="100%"
+              height="100%"
+              style={{ border: 0, minHeight: '400px', filter: 'invert(0.9) hue-rotate(180deg) brightness(0.9) contrast(0.9)' }}
+              allowFullScreen
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              title="Bản đồ Trường Đại học An Giang"
+              aria-label="Bản đồ vị trí Trường Đại học An Giang"
+            />
+          </motion.div>
+        </div>
+
+        {/* Ghi chú */}
+        <motion.p
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8, delay: 0.3 }}
+          className="text-center text-white/40 text-sm mt-6"
+        >
+          🚗 Có bãi đậu xe rộng rãi trong khuôn viên trường
+        </motion.p>
+      </div>
+    </section>
+  );
+}

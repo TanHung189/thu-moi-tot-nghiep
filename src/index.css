@@ -1,0 +1,329 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===== CSS Variables ===== */
+:root {
+  --navy-950: #030a14;
+  --navy-900: #071327;
+  --navy-800: #0e2648;
+  --navy-700: #153969;
+  /* Đổi từ vàng → xanh blue */
+  --accent-400: #60a5fa;   /* blue-400 */
+  --accent-500: #3b82f6;   /* blue-500 */
+  --accent-600: #2563eb;   /* blue-600 */
+  --accent-700: #1d4ed8;   /* blue-700 */
+}
+
+/* ===== Base Styles ===== */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  /* Be Vietnam Pro — font thiết kế riêng cho tiếng Việt */
+  font-family: 'Be Vietnam Pro', system-ui, sans-serif;
+  background-color: var(--navy-950);
+  color: #ffffff;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ===== Glassmorphism Component Classes ===== */
+@layer components {
+  .glass-card {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 8px 32px rgba(7, 19, 39, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+
+  .glass-card-light {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 4px 16px rgba(7, 19, 39, 0.3);
+  }
+
+  /* Đổi từ gradient vàng sang gradient xanh navy-blue */
+  .gold-text {
+    background: linear-gradient(135deg, #1d4ed8 0%, #60a5fa 50%, #2563eb 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .gold-border {
+    border: 1px solid rgba(59, 130, 246, 0.4);
+  }
+
+  /* Nút chính: nền xanh blue gradient */
+  .btn-gold {
+    @apply font-semibold;
+    background: linear-gradient(135deg, #1d4ed8 0%, #3b82f6 50%, #60a5fa 100%);
+    color: #ffffff;
+    @apply px-6 py-3 rounded-xl transition-all duration-300;
+    box-shadow: 0 2px 12px rgba(59, 130, 246, 0.3);
+  }
+  .btn-gold:hover {
+    box-shadow: 0 0 30px rgba(59, 130, 246, 0.6);
+    transform: scale(1.05);
+  }
+  .btn-gold:active {
+    transform: scale(0.95);
+  }
+
+  .btn-glass {
+    @apply glass-card text-white font-medium;
+    @apply px-6 py-3 rounded-xl transition-all duration-300;
+    @apply hover:bg-white/10 hover:scale-105;
+    @apply active:scale-95;
+    border: 1px solid rgba(59, 130, 246, 0.25);
+  }
+  .btn-glass:hover {
+    border-color: rgba(59, 130, 246, 0.5);
+  }
+
+  .section-title {
+    @apply font-serif text-3xl md:text-4xl lg:text-5xl font-bold text-center;
+  }
+
+  .section-divider {
+    @apply flex items-center gap-4 justify-center my-4;
+  }
+
+  .divider-line {
+    @apply h-px flex-1 max-w-24;
+    background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.5), transparent);
+  }
+}
+
+/* ===== Custom Scrollbar ===== */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--navy-950);
+}
+
+/* Màu scrollbar → xanh blue */
+::-webkit-scrollbar-thumb {
+  background: rgba(59, 130, 246, 0.4);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(59, 130, 246, 0.7);
+}
+
+/* ===== Shimmer Effect ===== */
+.shimmer-text {
+  background: linear-gradient(
+    90deg,
+    #1d4ed8 0%,
+    #60a5fa 25%,
+    #bfdbfe 50%,
+    #60a5fa 75%,
+    #1d4ed8 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 3s linear infinite;
+  /*
+   * ✅ Fix dấu tiếng Việt bị clip với -webkit-background-clip: text:
+   * Không dùng padding trực tiếp vào đây (phá gradient).
+   * Thay vào đó dùng line-height + hero-title-wrapper có padding.
+   */
+  line-height: 1.5;
+}
+
+/* Wrapper cho tiêu đề chính — padding để dấu tiếng Việt không bị clip */
+.hero-title-wrapper {
+  padding-top: 0.1em;
+  overflow: visible;
+}
+
+@keyframes shimmer {
+  0% { background-position: 0% center; }
+  100% { background-position: 200% center; }
+}
+
+/* ===== Particles Background — Đổi từ vàng sang blue ===== */
+.particles {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.particle {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  /* Đổi màu hạt từ vàng → xanh blue */
+  background: rgba(96, 165, 250, 0.6);
+  border-radius: 50%;
+  animation: rise linear infinite;
+}
+
+@keyframes rise {
+  0% {
+    opacity: 0;
+    transform: translateY(100vh) scale(0);
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-10vh) scale(1);
+  }
+}
+
+/* ===== Star Twinkling — Đổi từ vàng sang blue ===== */
+.star {
+  position: absolute;
+  border-radius: 50%;
+  animation: twinkle ease-in-out infinite;
+  /* Đổi màu sao từ vàng → xanh blue nhạt */
+  background: rgba(147, 197, 253, 0.8);
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.2; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.5); }
+}
+
+/* ===== Countdown Card ===== */
+.countdown-digit {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* ===== Sticky Note ===== */
+.sticky-note {
+  transform-origin: center top;
+  animation: stickyWobble 4s ease-in-out infinite;
+}
+
+.sticky-note:nth-child(2n) {
+  animation-delay: -2s;
+  animation-direction: reverse;
+}
+
+.sticky-note:nth-child(3n) {
+  animation-delay: -1s;
+}
+
+/* ===== Audio Player Disk ===== */
+.vinyl-disk {
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    #1a1a1a 0deg,
+    #2a2a2a 30deg,
+    #1a1a1a 60deg,
+    #2a2a2a 90deg,
+    #1a1a1a 120deg,
+    #2a2a2a 150deg,
+    #1a1a1a 180deg,
+    #2a2a2a 210deg,
+    #1a1a1a 240deg,
+    #2a2a2a 270deg,
+    #1a1a1a 300deg,
+    #2a2a2a 330deg,
+    #1a1a1a 360deg
+  );
+  /* Đổi viền từ vàng → xanh blue */
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5), 0 4px 20px rgba(0,0,0,0.6);
+}
+
+/* ===== Gallery Masonry ===== */
+.masonry-grid {
+  columns: 2;
+  column-gap: 12px;
+}
+
+@media (min-width: 768px) {
+  .masonry-grid {
+    columns: 3;
+    column-gap: 16px;
+  }
+}
+
+.masonry-item {
+  break-inside: avoid;
+  margin-bottom: 12px;
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Đổi hover shadow từ vàng → xanh blue */
+.masonry-item:hover {
+  transform: scale(1.02);
+  box-shadow: 0 8px 30px rgba(59, 130, 246, 0.35);
+}
+
+/* ===== Floating Buttons ===== */
+.floating-btn {
+  position: fixed;
+  z-index: 50;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.floating-btn:hover {
+  transform: scale(1.1) !important;
+}
+
+/* ===== Form Styles ===== */
+.form-input {
+  @apply w-full glass-card rounded-xl px-4 py-3 text-white placeholder-white/40;
+  @apply focus:outline-none transition-all duration-200;
+  font-family: 'Be Vietnam Pro', system-ui, sans-serif;
+}
+.form-input:focus {
+  border-color: rgba(59, 130, 246, 0.6);
+  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.4);
+}
+
+.form-label {
+  @apply block text-sm font-medium text-white/70 mb-2;
+  font-family: 'Be Vietnam Pro', system-ui, sans-serif;
+}
+
+/* ===== Section Padding ===== */
+.section-padding {
+  @apply px-4 py-16 md:px-8 md:py-24;
+}
+
+/* ===== Responsive Headings ===== */
+.hero-title {
+  font-size: clamp(2.5rem, 8vw, 5rem);
+  font-family: 'Playfair Display', 'Be Vietnam Pro', serif;
+}
+
+.hero-subtitle {
+  font-size: clamp(1rem, 3vw, 1.5rem);
+  font-family: 'Be Vietnam Pro', system-ui, sans-serif;
+}
