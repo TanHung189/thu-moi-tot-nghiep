@@ -238,6 +238,8 @@ export default function GallerySection() {
   const { photos, loading, hasMore, fetchPhotos, toggleLike, addComment, getComments } = useGallery(userIdentifier);
   
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [isExpanded, setIsExpanded] = useState(false);
+  
   const { ref, inView } = useInView({
     threshold: 0.1,
     rootMargin: '400px',
@@ -265,7 +267,9 @@ export default function GallerySection() {
   // Group photos by Month-Year timeline
   const timelineGroups = useMemo(() => {
     const groups: { [key: string]: GalleryPhoto[] } = {};
-    photos.forEach(photo => {
+    const photosToGroup = isExpanded ? photos : photos.slice(0, 6);
+    
+    photosToGroup.forEach(photo => {
       // Use YYYY-MM as the key for reliable grouping and sorting
       const groupKey = photo.timeline_date ? photo.timeline_date.substring(0, 7) : 'Chưa phân loại';
       if (!groups[groupKey]) groups[groupKey] = [];
@@ -360,15 +364,26 @@ export default function GallerySection() {
           ))}
         </div>
 
-        {/* Infinite Scroll trigger */}
-        <div ref={ref} className="w-full py-8 flex justify-center mt-8">
-          {loading && (
-            <div className="flex flex-col items-center gap-2">
-              <div className="w-8 h-8 border-4 border-[#bca374]/30 border-t-[#bca374] rounded-full animate-spin"></div>
-              <span className="text-sm text-gray-500 font-medium tracking-wide">Đang tải thêm kỷ niệm...</span>
-            </div>
-          )}
-        </div>
+        {/* Infinite Scroll trigger or View All button */}
+        {!isExpanded && photos.length > 6 ? (
+          <div className="w-full py-8 flex justify-center mt-4">
+            <button
+              onClick={() => setIsExpanded(true)}
+              className="px-8 py-3 bg-[#bca374] text-white rounded-full font-medium hover:bg-gold-600 transition-colors shadow-lg hover:shadow-xl"
+            >
+              Xem Tất Cả Kỷ Niệm
+            </button>
+          </div>
+        ) : (
+          <div ref={ref} className="w-full py-8 flex justify-center mt-8">
+            {loading && (
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-8 h-8 border-4 border-[#bca374]/30 border-t-[#bca374] rounded-full animate-spin"></div>
+                <span className="text-sm text-gray-500 font-medium tracking-wide">Đang tải thêm kỷ niệm...</span>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Lightbox */}

@@ -53,15 +53,15 @@ export default function QRCodeModal() {
       <motion.button
         onClick={() => setIsOpen(true)}
         id="qr-code-open-btn"
-        className="floating-btn"
-        style={{ bottom: '1.5rem', right: '1.5rem' }}
+        className="floating-btn opacity-80 hover:opacity-100 transition-opacity"
+        style={{ bottom: '1rem', right: '1rem' }}
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
         aria-label="Mở mã QR để chia sẻ thư mời"
         aria-haspopup="dialog"
       >
         <div
-          className="w-14 h-14 rounded-full flex items-center justify-center"
+          className="w-10 h-10 md:w-14 md:h-14 rounded-full flex items-center justify-center"
           style={{
             background: 'linear-gradient(135deg, #1d4ed8, #3b82f6)',
             boxShadow: '0 0 20px rgba(59,130,246,0.5), 0 4px 15px rgba(0,0,0,0.4)',
