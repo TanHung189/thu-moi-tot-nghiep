@@ -55,7 +55,7 @@ export default function FloatingAudioPlayer() {
   return (
     <div
       className="floating-btn"
-      style={{ bottom: '2rem', right: '1.5rem' }}
+      style={{ bottom: '1.5rem', left: '1.5rem' }}
       aria-label="Trình phát nhạc nổi"
     >
       <audio ref={audioRef} src={MUSIC_URL} preload="none" aria-hidden="true" />

@@ -1,7 +1,7 @@
 // Component Gallery - Bộ sưu tập ảnh kỷ niệm dạng Timeline với Infinite Scroll
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Images, X, ChevronLeft, ChevronRight, Heart, MessageCircle, Send } from 'lucide-react';
+import { Images, X, ChevronLeft, ChevronRight, Heart, MessageCircle, Send, Upload } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { useInView } from 'react-intersection-observer';
@@ -308,9 +308,19 @@ export default function GallerySection() {
           <h2 className="section-title mb-4">
             <span className="text-[#bca374] font-script text-5xl">Dòng Thời Gian</span>
           </h2>
-          <p className="text-[#666666] max-w-lg mx-auto font-handwriting text-xl">
+          <p className="text-[#666666] max-w-lg mx-auto font-handwriting text-xl mb-6">
             Hành trình đại học qua những khung hình
           </p>
+          <div className="flex justify-center">
+            <a 
+              href="#admin" 
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-white/50 hover:bg-white border border-[#bca374]/30 hover:border-[#bca374] rounded-full text-sm text-[#bca374] hover:text-gold-600 font-medium transition-all shadow-sm"
+              aria-label="Đi đến trang Quản trị để tải lên ảnh"
+            >
+              <Upload className="w-4 h-4" />
+              Tải lên kỷ niệm
+            </a>
+          </div>
         </motion.div>
 
         {photos.length === 0 && !loading && (
