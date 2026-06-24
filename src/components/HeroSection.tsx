@@ -47,7 +47,7 @@ export default function HeroSection() {
           className="mb-8"
         >
           <h1
-            className="font-serif md:text-6xl lg:text-7xl text-[#bca374] leading-tight px-4 py-2"
+            className="font-serif text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-[#bca374] leading-tight px-4 py-2"
             style={{ textShadow: "1px 1px 2px rgba(0,0,0,0.05)" }}
           >
             {EVENT_INFO.name}

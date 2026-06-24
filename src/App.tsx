@@ -16,6 +16,7 @@ import Guestbook from './components/Guestbook';
 import FloatingAudioPlayer from './components/FloatingAudioPlayer';
 import QRCodeModal from './components/QRCodeModal';
 import Footer from './components/Footer';
+import AdminGalleryManager from './components/AdminGalleryManager';
 
 // Dữ liệu lời chúc ban đầu
 import { type GuestMessage } from './data/eventData';
@@ -99,6 +100,7 @@ function SectionDivider() {
 export default function App() {
   // State quản lý danh sách lời chúc từ Supabase
   const [messages, setMessages] = useState<GuestMessage[]>([]);
+  const [isAdminRoute, setIsAdminRoute] = useState(false);
 
   // Tải lời chúc từ Supabase khi ứng dụng khởi chạy
   useEffect(() => {
@@ -128,6 +130,18 @@ export default function App() {
     };
 
     fetchMessages();
+
+    // Check for admin route
+    const checkHash = () => {
+      if (window.location.hash === '#admin') {
+        setIsAdminRoute(true);
+      } else {
+        setIsAdminRoute(false);
+      }
+    };
+    checkHash();
+    window.addEventListener('hashchange', checkHash);
+    return () => window.removeEventListener('hashchange', checkHash);
   }, []);
 
   // Hàm thêm lời chúc mới từ form RSVP lên Supabase
@@ -152,6 +166,10 @@ export default function App() {
       console.error('Lỗi khi gửi lời chúc lên Supabase:', error);
     }
   };
+
+  if (isAdminRoute) {
+    return <AdminGalleryManager />;
+  }
 
   return (
     <div className="relative min-h-screen bg-transparent overflow-x-hidden">
