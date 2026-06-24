@@ -20,7 +20,7 @@ export interface PhotoComment {
   created_at: string;
 }
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 50;
 
 export function useGallery(userIdentifier: string) {
   const [photos, setPhotos] = useState<GalleryPhoto[]>([]);
@@ -50,6 +50,7 @@ export function useGallery(userIdentifier: string) {
         .select('*')
         .order('timeline_date', { ascending: false })
         .order('created_at', { ascending: false })
+        .order('id', { ascending: false })
         .range(from, to);
 
       if (photosError) throw photosError;

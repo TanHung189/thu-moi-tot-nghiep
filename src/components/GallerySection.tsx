@@ -35,6 +35,10 @@ function Lightbox({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
+    // Khóa cuộn trang nền khi mở Lightbox
+    const originalStyle = window.getComputedStyle(document.body).overflow;
+    document.body.style.overflow = 'hidden';
+
     let isMounted = true;
     setLoadingComments(true);
     getComments(currentPhoto.id).then((data) => {
@@ -43,7 +47,10 @@ function Lightbox({
         setLoadingComments(false);
       }
     });
-    return () => { isMounted = false; };
+    return () => { 
+      isMounted = false; 
+      document.body.style.overflow = originalStyle;
+    };
   }, [currentPhoto.id, getComments]);
 
   const handleAddComment = async (e: React.FormEvent) => {

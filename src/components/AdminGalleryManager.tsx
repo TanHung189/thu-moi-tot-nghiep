@@ -4,6 +4,7 @@ import { useGallery, type GalleryPhoto } from '../hooks/useGallery';
 import { format, parseISO } from 'date-fns';
 import { Upload, Trash2, X, CheckCircle, AlertCircle, Edit2 } from 'lucide-react';
 import EXIF from 'exif-js';
+import imageCompression from 'browser-image-compression';
 
 const extractDateFromImage = (file: File): Promise<string> => {
   return new Promise((resolve) => {
@@ -42,7 +43,8 @@ const extractDateFromImage = (file: File): Promise<string> => {
 };
 
 export default function AdminGalleryManager() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  // Đã bỏ yêu cầu mật khẩu theo yêu cầu của bạn: ai cũng có thể truy cập
+  const [isAuthenticated, setIsAuthenticated] = useState(true);
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
 
@@ -80,14 +82,25 @@ export default function AdminGalleryManager() {
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       try {
+        // Lấy ngày gốc từ EXIF TRƯỚC KHI nén ảnh (vì nén ảnh sẽ làm mất EXIF)
+        const photoDate = await extractDateFromImage(file);
+
+        // Nén ảnh
+        const options = {
+          maxSizeMB: 0.4, // Nén xuống khoảng 400KB
+          maxWidthOrHeight: 1920, // Đảm bảo độ phân giải đủ lớn để xem Full HD
+          useWebWorker: true,
+        };
+        const compressedFile = await imageCompression(file, options);
+
         // 1. Upload to Storage
-        const fileExt = file.name.split('.').pop();
+        const fileExt = file.name.split('.').pop() || 'jpg';
         const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
         const filePath = `${fileName}`;
 
         const { error: uploadError } = await supabase.storage
           .from('gallery')
-          .upload(filePath, file);
+          .upload(filePath, compressedFile);
 
         if (uploadError) throw uploadError;
 
@@ -96,10 +109,7 @@ export default function AdminGalleryManager() {
           .from('gallery')
           .getPublicUrl(filePath);
 
-        // 3. Extract original date from EXIF or file metadata
-        const photoDate = await extractDateFromImage(file);
-
-        // 4. Save to Database
+        // 3. Save to Database
         const { data: dbData, error: dbError } = await supabase
           .from('gallery_photos')
           .insert([{ 

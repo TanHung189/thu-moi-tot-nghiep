@@ -9,6 +9,7 @@ export default function FloatingAudioPlayer() {
   const [isExpanded, setIsExpanded] = useState(false);
   const [hasError, setHasError] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const userToggledRef = useRef(false); // Lưu trạng thái xem người dùng đã tự bấm chưa
 
   // ⚠️ THAY ĐỔI: Thay URL bên dưới bằng link nhạc của bạn
   // Gợi ý nguồn nhạc miễn phí:
@@ -16,9 +17,11 @@ export default function FloatingAudioPlayer() {
   // - Free Music Archive: https://freemusicarchive.org/
   // - Hoặc upload file MP3 lên GitHub repository cùng project này
   // Ví dụ nếu để file trong /public/music.mp3: '/music.mp3'
+  // ⚠️ QUAN TRỌNG: Phải là link TRỰC TIẾP tới file có đuôi .mp3 hoặc .ogg
+  // Link cũ của bạn là link một trang web HTML, không phải file nhạc nên sẽ bị lỗi.
   const MUSIC_URL =
-    "https://pixabay.com/music/modern-classical-inspiring-cinematic-piano-162193/";
-  // 👆 Thay URL này bằng nhạc Acoustic bạn muốn phát
+    "https://upload.wikimedia.org/wikipedia/commons/b/b5/Kevin_MacLeod_-_Tranquility.ogg";
+  // 👆 Đây là bản piano nhẹ nhàng, không bản quyền. Bạn có thể thay bằng link mp3 khác.
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -37,7 +40,11 @@ export default function FloatingAudioPlayer() {
     let isMounted = true;
 
     const handleInteraction = async () => {
-      if (!isMounted) return;
+      // Nếu người dùng đã tự thao tác (bấm tắt/bật) thì hủy bỏ tính năng autoplay chìm
+      if (!isMounted || userToggledRef.current) {
+        removeListeners();
+        return;
+      }
       try {
         await audio.play();
         setIsPlaying(true);
@@ -81,6 +88,7 @@ export default function FloatingAudioPlayer() {
   }, []);
 
   const togglePlay = async () => {
+    userToggledRef.current = true; // Đánh dấu người dùng đã chủ động tương tác
     const audio = audioRef.current;
     if (!audio || hasError) return;
 
