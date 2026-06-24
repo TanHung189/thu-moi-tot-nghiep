@@ -15,7 +15,7 @@ export const galleryImages: GalleryImage[] = [
   {
     id: 1,
     // 👉 THAY Link ảnh 1: ví dụ ảnh chụp trong trường, mặc áo tốt nghiệp
-    src: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=400&q=80',
+    src: 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=400&q=80',
     alt: 'Kỷ niệm tốt nghiệp 1',
     size: 'tall',
   },

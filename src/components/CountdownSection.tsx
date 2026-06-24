@@ -50,22 +50,16 @@ function CountdownCard({
       className="flex flex-col items-center"
     >
       <div
-        className="glass-card gold-border rounded-2xl w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 flex items-center justify-center relative overflow-hidden"
-        style={{
-          boxShadow: '0 0 20px rgba(59,130,246,0.15), inset 0 1px 0 rgba(255,255,255,0.1)',
-        }}
+        className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 flex items-center justify-center relative border-[1px] border-[#d1d5db] bg-transparent"
       >
-        {/* Ánh sáng phía trên */}
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gold-400/50 to-transparent" />
-
         <span
-          className="countdown-digit text-3xl sm:text-4xl md:text-5xl font-bold gold-text font-serif"
+          className="countdown-digit text-3xl sm:text-4xl md:text-5xl text-[#bca374] font-serif"
           aria-label={`${value} ${label}`}
         >
           {formatted}
         </span>
       </div>
-      <span className="mt-3 text-white/60 text-xs sm:text-sm font-medium tracking-widest uppercase">
+      <span className="mt-3 text-[#666666] text-xs sm:text-sm font-medium tracking-widest uppercase">
         {label}
       </span>
     </motion.div>
@@ -104,29 +98,29 @@ export default function CountdownSection() {
           transition={{ duration: 0.8 }}
           className="text-center mb-12"
         >
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <Clock className="w-5 h-5 text-gold-400" />
-            <span className="text-gold-400 text-sm font-medium tracking-widest uppercase">Đếm Ngược</span>
-            <Clock className="w-5 h-5 text-gold-400" />
+          <div className="flex items-center justify-center gap-3 mb-4 opacity-70">
+            <Clock className="w-5 h-5 text-[#bca374]" strokeWidth={1.5} />
+            <span className="text-[#bca374] text-sm font-medium tracking-widest uppercase">Đếm Ngược</span>
+            <Clock className="w-5 h-5 text-[#bca374]" strokeWidth={1.5} />
           </div>
 
           {isExpired ? (
             <div className="flex flex-col items-center gap-3">
-              <PartyPopper className="w-12 h-12 text-gold-400" />
-              <h2 className="section-title gold-text">
+              <PartyPopper className="w-10 h-10 text-[#bca374]" strokeWidth={1.5} />
+              <h2 className="section-title text-[#1a1a1a]">
                 Hôm Nay Là Ngày Trọng Đại!
               </h2>
-              <p className="text-white/70 text-lg">Chúc mừng Bùi Đỗ Tấn Hưng tốt nghiệp! 🎓</p>
+              <p className="text-[#666666] text-lg font-handwriting">Chúc mừng Bùi Đỗ Tấn Hưng tốt nghiệp!</p>
             </div>
           ) : (
             <>
               <h2 className="section-title mb-4">
-                <span className="gold-text">Còn Lại</span>
-                <span className="text-white"> Bao Lâu?</span>
+                <span className="text-[#bca374]">Còn Lại</span>
+                <span className="text-[#1a1a1a]"> Bao Lâu?</span>
               </h2>
-              <p className="text-white/60 text-base">
-                Đến <span className="text-gold-400 font-semibold">{EVENT_INFO.startTime}</span>{' '}
-                ngày <span className="text-gold-400 font-semibold">{EVENT_INFO.dateDisplay}</span>
+              <p className="text-[#666666] text-base tracking-wider uppercase text-sm mt-4">
+                Đến <span className="text-[#1a1a1a] font-semibold">{EVENT_INFO.startTime}</span>{' '}
+                ngày <span className="text-[#1a1a1a] font-semibold">{EVENT_INFO.dateDisplay}</span>
               </p>
             </>
           )}
@@ -140,7 +134,7 @@ export default function CountdownSection() {
                 <CountdownCard value={unit.value} label={unit.label} index={index} />
                 {/* Dấu hai chấm phân cách */}
                 {index < units.length - 1 && (
-                  <span className="text-gold-400/60 text-2xl sm:text-4xl font-bold self-start mt-4 sm:mt-5 animate-pulse">
+                  <span className="text-[#d1d5db] text-2xl sm:text-4xl font-serif font-light self-start mt-4 sm:mt-5">
                     :
                   </span>
                 )}
@@ -155,25 +149,23 @@ export default function CountdownSection() {
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
           transition={{ duration: 0.8, delay: 0.5 }}
-          className="mt-12 glass-card rounded-2xl p-6 gold-border"
+          className="mt-12 border border-[#d1d5db] p-6 bg-transparent"
         >
           <div className="flex items-center justify-between mb-3">
-            <span className="text-white/60 text-sm">Đang trong hành trình...</span>
-            <span className="text-gold-400 text-sm font-semibold">
+            <span className="text-[#666666] text-xs uppercase tracking-widest">Đang trong hành trình...</span>
+            <span className="text-[#1a1a1a] text-sm font-semibold">
               {EVENT_INFO.dateDisplay}
             </span>
           </div>
-          <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+          <div className="w-full h-1 bg-[#e5e7eb] overflow-hidden">
             <div
-              className="h-full rounded-full transition-all duration-1000"
+              className="h-full transition-all duration-1000 bg-[#bca374]"
               style={{
-                background: 'linear-gradient(90deg, #1d4ed8, #60a5fa, #3b82f6)',
                 width: isExpired ? '100%' : `${Math.max(5, 100 - (timeLeft.days / 365) * 100)}%`,
-                boxShadow: '0 0 10px rgba(59,130,246,0.6)',
               }}
             />
           </div>
-          <p className="text-white/40 text-xs mt-2 text-center">
+          <p className="text-[#bca374] font-handwriting text-xl mt-4 text-center">
             "Hành trình ngàn dặm bắt đầu từ một bước chân"
           </p>
         </motion.div>

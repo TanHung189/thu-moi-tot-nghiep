@@ -8,40 +8,36 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Bảng màu chính: Trắng, Navy đậm, Xanh Blue (thay vàng Gold)
-        navy: {
-          50:  '#eef2f7',
-          100: '#d5e0ee',
-          200: '#aac0dd',
-          300: '#7fa0cc',
-          400: '#5480bb',
-          500: '#2960aa',
-          600: '#1d4d8a',
-          700: '#153969',
-          800: '#0e2648',
-          900: '#071327',
-          950: '#030a14',
+        vintage: {
+          50: '#f9f8f6',
+          100: '#f2eee9',
+          200: '#e5ddd3',
+          300: '#d5c6b6',
+          400: '#c4a991',
+          500: '#bca374', // main accent gold
+          600: '#a38757',
+          700: '#866c45',
+          800: '#6d583b',
+          900: '#5a4933',
         },
-        // gold ở đây được đổi thành blue — giữ tên 'gold' để không cần sửa component nào
         gold: {
-          50:  '#eff6ff',
-          100: '#dbeafe',
-          200: '#bfdbfe',
-          300: '#93c5fd',
-          400: '#60a5fa',   // blue-400 — màu xanh sáng dùng cho accent text
-          500: '#3b82f6',   // blue-500 — màu xanh chủ đạo
-          600: '#2563eb',   // blue-600
-          700: '#1d4ed8',   // blue-700 — xanh đậm cho hover
-          800: '#1e40af',
-          900: '#1e3a8a',
-          950: '#172554',
+          50: '#f9f8f6',
+          100: '#f2eee9',
+          200: '#e5ddd3',
+          300: '#d5c6b6',
+          400: '#c4a991',
+          500: '#bca374', // main accent gold
+          600: '#a38757',
+          700: '#866c45',
+          800: '#6d583b',
+          900: '#5a4933',
         },
       },
       fontFamily: {
-        // Be Vietnam Pro — thiết kế riêng cho tiếng Việt, hỗ trợ đầy đủ dấu
-        sans: ['"Be Vietnam Pro"', 'system-ui', 'sans-serif'],
-        // Playfair Display — serif sang trọng cho tiêu đề
+        sans: ['"Montserrat"', 'system-ui', 'sans-serif'],
         serif: ['"Playfair Display"', 'Georgia', 'serif'],
+        script: ['"Alex Brush"', 'cursive'],
+        handwriting: ['"Caveat"', 'cursive'],
       },
       animation: {
         'spin-slow': 'spin 8s linear infinite',

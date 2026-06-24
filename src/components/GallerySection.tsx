@@ -49,35 +49,35 @@ function Lightbox({
           <button
             onClick={onClose}
             id="lightbox-close-btn"
-            className="absolute top-4 right-4 glass-card rounded-full p-2 text-white hover:text-gold-400 transition-colors"
+            className="absolute top-4 right-4 bg-[#f4f4f4] rounded-none p-2 text-[#1a1a1a] hover:bg-[#bca374] hover:text-white transition-colors border border-[#d1d5db]"
             aria-label="Đóng lightbox"
           >
-            <X className="w-6 h-6" />
+            <X className="w-6 h-6" strokeWidth={1.5} />
           </button>
 
           {/* Nút điều hướng trái */}
           <button
             onClick={onPrev}
             id="lightbox-prev-btn"
-            className="absolute left-4 top-1/2 -translate-y-1/2 glass-card rounded-full p-3 text-white hover:text-gold-400 transition-colors"
+            className="absolute left-4 top-1/2 -translate-y-1/2 bg-[#f4f4f4] rounded-none p-3 text-[#1a1a1a] hover:bg-[#bca374] hover:text-white transition-colors border border-[#d1d5db]"
             aria-label="Ảnh trước"
           >
-            <ChevronLeft className="w-6 h-6" />
+            <ChevronLeft className="w-6 h-6" strokeWidth={1.5} />
           </button>
 
           {/* Nút điều hướng phải */}
           <button
             onClick={onNext}
             id="lightbox-next-btn"
-            className="absolute right-4 top-1/2 -translate-y-1/2 glass-card rounded-full p-3 text-white hover:text-gold-400 transition-colors"
+            className="absolute right-4 top-1/2 -translate-y-1/2 bg-[#f4f4f4] rounded-none p-3 text-[#1a1a1a] hover:bg-[#bca374] hover:text-white transition-colors border border-[#d1d5db]"
             aria-label="Ảnh tiếp theo"
           >
-            <ChevronRight className="w-6 h-6" />
+            <ChevronRight className="w-6 h-6" strokeWidth={1.5} />
           </button>
 
           {/* Chỉ số ảnh */}
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 glass-card px-4 py-2 rounded-full">
-            <span className="text-white/70 text-sm">
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-[#f4f4f4] px-4 py-2 rounded-none border border-[#d1d5db]">
+            <span className="text-[#666666] text-sm tracking-widest">
               {currentIndex + 1} / {images.length}
             </span>
           </div>
@@ -103,21 +103,19 @@ function GalleryCard({ image, index, onClick }: { image: GalleryImage; index: nu
       }}
       aria-label={`Xem ảnh: ${image.alt}`}
     >
-      <div className="relative w-full h-full overflow-hidden rounded-xl">
+      <div className="relative w-full h-full overflow-hidden border-[4px] border-white shadow-sm p-1 bg-white">
         <img
           src={image.src}
           alt={image.alt}
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+          className="w-full h-full object-cover transition-all duration-700 filter grayscale sepia-[0.2] group-hover:grayscale-0 group-hover:sepia-0 group-hover:scale-105"
           loading="lazy"
         />
         {/* Overlay khi hover */}
-        <div className="absolute inset-0 bg-navy-950/0 group-hover:bg-navy-950/40 transition-all duration-300 flex items-center justify-center">
-          <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 glass-card rounded-full p-3">
-            <Images className="w-6 h-6 text-gold-400" />
+        <div className="absolute inset-0 bg-[#f4f4f4]/0 group-hover:bg-[#f4f4f4]/20 transition-all duration-300 flex items-center justify-center">
+          <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white border border-[#bca374] p-3 rounded-none">
+            <Images className="w-6 h-6 text-[#bca374]" strokeWidth={1} />
           </div>
         </div>
-        {/* Viền vàng khi hover */}
-        <div className="absolute inset-0 rounded-xl border border-transparent group-hover:border-gold-500/40 transition-all duration-300" />
       </div>
     </motion.div>
   );
@@ -151,17 +149,17 @@ export default function GallerySection() {
           transition={{ duration: 0.8 }}
           className="text-center mb-12"
         >
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <Images className="w-5 h-5 text-gold-400" />
-            <span className="text-gold-400 text-sm font-medium tracking-widest uppercase">Bộ Sưu Tập</span>
-            <Images className="w-5 h-5 text-gold-400" />
+          <div className="flex items-center justify-center gap-3 mb-4 opacity-70">
+            <Images className="w-5 h-5 text-[#bca374]" strokeWidth={1.5} />
+            <span className="text-[#bca374] text-sm font-medium tracking-widest uppercase">Bộ Sưu Tập</span>
+            <Images className="w-5 h-5 text-[#bca374]" strokeWidth={1.5} />
           </div>
           <h2 className="section-title mb-4">
-            <span className="gold-text">Kỷ Niệm</span>{' '}
-            <span className="text-white">Đáng Nhớ</span>
+            <span className="text-[#bca374] font-script text-5xl">Kỷ Niệm</span>{' '}
+            <span className="text-[#1a1a1a]">Đáng Nhớ</span>
           </h2>
-          <p className="text-white/60 max-w-lg mx-auto">
-            Những khoảnh khắc quý giá trên hành trình 4 năm đại học — nhấn vào ảnh để xem rõ hơn.
+          <p className="text-[#666666] max-w-lg mx-auto font-handwriting text-xl">
+            Những khoảnh khắc quý giá trên hành trình đại học
           </p>
         </motion.div>
 
@@ -182,11 +180,11 @@ export default function GallerySection() {
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
-          className="mt-8 glass-card gold-border rounded-2xl p-4 text-center"
+          className="mt-8 border border-[#d1d5db] bg-transparent p-4 text-center"
         >
-          <p className="text-white/50 text-sm">
-            💡 <span className="text-gold-400">Mẹo:</span> Thay link ảnh trong file{' '}
-            <code className="text-gold-300 bg-white/10 px-2 py-0.5 rounded text-xs">
+          <p className="text-[#666666] text-sm tracking-widest uppercase">
+            💡 <span className="text-[#bca374]">Mẹo:</span> Thay link ảnh trong file{' '}
+            <code className="text-[#1a1a1a] border border-[#d1d5db] px-2 py-0.5 text-xs">
               src/data/eventData.ts
             </code>{' '}
             để hiển thị ảnh của bạn

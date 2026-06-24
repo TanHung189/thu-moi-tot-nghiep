@@ -53,15 +53,13 @@ export default function LocationSection() {
           transition={{ duration: 0.8 }}
           className="text-center mb-12"
         >
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <MapPin className="w-5 h-5 text-gold-400" />
-            <span className="text-gold-400 text-sm font-medium tracking-widest uppercase">Địa Điểm Tổ Chức</span>
-            <MapPin className="w-5 h-5 text-gold-400" />
+          <div className="flex items-center justify-center gap-3 mb-4 opacity-70">
+            <MapPin className="w-5 h-5 text-[#bca374]" strokeWidth={1.5} />
+            <span className="text-[#bca374] text-sm font-medium tracking-widest uppercase">Địa Điểm Tổ Chức</span>
+            <MapPin className="w-5 h-5 text-[#bca374]" strokeWidth={1.5} />
           </div>
           <h2 className="section-title mb-4">
-            <span className="gold-text">Nơi Diễn Ra</span>
-            <br />
-            <span className="text-white text-2xl md:text-3xl">Lễ Tốt Nghiệp</span>
+            <span className="text-[#bca374] text-2xl md:text-3xl font-serif">Lễ Tốt Nghiệp</span>
           </h2>
         </motion.div>
 
@@ -74,38 +72,33 @@ export default function LocationSection() {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
-            className="glass-card gold-border rounded-3xl p-8 flex flex-col gap-6"
+            className="border-[1px] border-[#d1d5db] bg-transparent p-8 flex flex-col gap-8"
           >
             {/* Tên trường */}
-            <div className="flex items-start gap-4">
-              <div className="glass-card-light rounded-xl p-3 shrink-0">
-                <MapPin className="w-6 h-6 text-gold-400" />
-              </div>
-              <div>
-                <p className="text-white/50 text-xs uppercase tracking-wider mb-1">Địa Điểm</p>
-                <h3 className="text-white font-serif font-bold text-lg leading-snug">
-                  {EVENT_INFO.venue}
-                </h3>
-                <p className="text-white/60 text-sm mt-1">{EVENT_INFO.address}</p>
-              </div>
-            </div>
-
-            {/* Thời gian */}
-            <div className="flex items-start gap-4">
-              <div className="glass-card-light rounded-xl p-3 shrink-0">
-                <Calendar className="w-6 h-6 text-gold-400" />
-              </div>
-              <div>
-                <p className="text-white/50 text-xs uppercase tracking-wider mb-1">Thời Gian</p>
-                <p className="text-white font-bold text-lg">
-                  {EVENT_INFO.startTime} – {EVENT_INFO.endTime}
-                </p>
-                <p className="text-gold-400 font-serif text-base">{EVENT_INFO.dateDisplay}</p>
-              </div>
+            <div className="flex flex-col items-center text-center">
+              <MapPin className="w-8 h-8 text-[#bca374] mb-3" strokeWidth={1} />
+              <p className="text-[#666666] text-xs uppercase tracking-widest mb-2">Địa Điểm</p>
+              <h3 className="text-[#1a1a1a] font-serif font-bold text-xl leading-snug mb-1">
+                {EVENT_INFO.venue}
+              </h3>
+              <p className="text-[#666666] text-sm">{EVENT_INFO.address}</p>
             </div>
 
             {/* Đường kẻ trang trí */}
-            <div className="h-px bg-gradient-to-r from-transparent via-gold-500/30 to-transparent" />
+            <div className="w-24 mx-auto h-px bg-[#d1d5db]" />
+
+            {/* Thời gian */}
+            <div className="flex flex-col items-center text-center">
+              <Calendar className="w-8 h-8 text-[#bca374] mb-3" strokeWidth={1} />
+              <p className="text-[#666666] text-xs uppercase tracking-widest mb-2">Thời Gian</p>
+              <p className="text-[#1a1a1a] font-bold font-serif text-xl mb-1">
+                {EVENT_INFO.startTime} – {EVENT_INFO.endTime}
+              </p>
+              <p className="text-[#666666] text-sm uppercase tracking-widest">{EVENT_INFO.dateDisplay}</p>
+            </div>
+
+            {/* Đường kẻ trang trí */}
+            <div className="w-full h-px bg-[#d1d5db]" />
 
             {/* Nút hành động */}
             <div className="flex flex-col sm:flex-row gap-3">
@@ -129,7 +122,7 @@ export default function LocationSection() {
                 className="btn-glass flex items-center justify-center gap-2 text-sm flex-1"
                 aria-label="Tải file lịch .ics"
               >
-                <Calendar className="w-4 h-4 text-gold-400" />
+                <Calendar className="w-4 h-4 text-[#bca374]" />
                 <span>Lịch Apple/Outlook</span>
               </button>
             </div>
@@ -140,7 +133,7 @@ export default function LocationSection() {
               target="_blank"
               rel="noopener noreferrer"
               id="btn-get-directions"
-              className="flex items-center justify-center gap-2 text-gold-400 hover:text-gold-300 transition-colors text-sm font-medium"
+              className="flex items-center justify-center gap-2 text-[#666666] hover:text-[#bca374] transition-colors text-xs tracking-widest uppercase font-medium mt-2"
               aria-label="Xem chỉ đường trên Google Maps"
             >
               <Navigation className="w-4 h-4" />
@@ -155,7 +148,7 @@ export default function LocationSection() {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
-            className="glass-card gold-border rounded-3xl overflow-hidden"
+            className="border-[1px] border-[#d1d5db] bg-[#e5e7eb] overflow-hidden"
             style={{ minHeight: '400px' }}
           >
             {/*
@@ -169,7 +162,7 @@ export default function LocationSection() {
               src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3920.0!2d105.4167!3d10.3833!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31a0e3f4d5c6e7a9%3A0x1234567890abcdef!2sTr%C6%B0%E1%BB%9Dng%20%C4%90%E1%BA%A1i%20h%E1%BB%8Dc%20An%20Giang!5e0!3m2!1svi!2svn!4v1234567890"
               width="100%"
               height="100%"
-              style={{ border: 0, minHeight: '400px', filter: 'invert(0.9) hue-rotate(180deg) brightness(0.9) contrast(0.9)' }}
+              style={{ border: 0, minHeight: '400px', filter: 'grayscale(1) sepia(0.2) opacity(0.8)' }}
               allowFullScreen
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
@@ -185,7 +178,7 @@ export default function LocationSection() {
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
           transition={{ duration: 0.8, delay: 0.3 }}
-          className="text-center text-white/40 text-sm mt-6"
+          className="text-center text-[#666666] font-handwriting text-xl mt-8"
         >
           🚗 Có bãi đậu xe rộng rãi trong khuôn viên trường
         </motion.p>

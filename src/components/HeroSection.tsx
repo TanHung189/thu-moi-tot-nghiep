@@ -1,7 +1,7 @@
 // Component Hero Section - Phần đầu trang với tên và hiệu ứng sang trọng
-import { motion } from 'framer-motion';
-import { GraduationCap, Star } from 'lucide-react';
-import { EVENT_INFO } from '../data/eventData';
+import { motion } from "framer-motion";
+import { GraduationCap, Star } from "lucide-react";
+import { EVENT_INFO } from "../data/eventData";
 
 export default function HeroSection() {
   return (
@@ -9,45 +9,24 @@ export default function HeroSection() {
       id="hero"
       className="relative min-h-screen flex flex-col items-center justify-center text-center px-4 py-20 overflow-hidden"
     >
-      {/* Hình nền trường đại học An Giang mờ ảo */}
-      <div
-        className="absolute inset-0 z-0"
-        style={{
-          backgroundImage: `url('https://upload.wikimedia.org/wikipedia/commons/e/e2/Tr%C6%B0%E1%BB%9Dng_%C4%90%E1%BA%A1i_H%E1%BB%8Dc_An_Giang.jpg')`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          filter: 'brightness(0.15) saturate(0.5)',
-        }}
-      />
+      {/* Lớp nền trong suốt để dùng nền giấy từ body */}
+      <div className="absolute inset-0 z-0 bg-transparent" />
 
-      {/* Overlay gradient */}
-      <div
-        className="absolute inset-0 z-0"
-        style={{
-          background: 'linear-gradient(to bottom, rgba(3,10,20,0.3) 0%, rgba(3,10,20,0.7) 50%, rgba(3,10,20,1) 100%)',
-        }}
-      />
-
-      {/* Vòng tròn ánh sáng vàng phía sau */}
-      <div
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full z-0 pointer-events-none"
-        style={{
-          background: 'radial-gradient(circle, rgba(59,130,246,0.08) 0%, transparent 70%)',
-        }}
-      />
+      {/* Vòng cung/họa tiết trang trí (giả lập bằng border mảnh) */}
+      <div className="absolute inset-4 sm:inset-8 border-[1px] border-[#bca374] opacity-30 pointer-events-none z-0" />
+      <div className="absolute inset-5 sm:inset-9 border-[1px] border-[#bca374] opacity-20 pointer-events-none z-0" />
 
       {/* Nội dung chính */}
       <div className="relative z-10 max-w-4xl mx-auto">
-
-        {/* Icon nón tốt nghiệp */}
+        {/* Icon nón tốt nghiệp phong cách line-art */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
-          className="flex justify-center mb-6"
+          className="flex justify-center mb-10"
         >
-          <div className="glass-card rounded-full p-5 gold-border">
-            <GraduationCap className="w-12 h-12 text-blue-400" />
+          <div className="p-4 border-[1px] border-[#bca374] rounded-full">
+            <GraduationCap className="w-10 h-10 text-[#bca374] stroke-[1.5]" />
           </div>
         </motion.div>
 
@@ -56,25 +35,21 @@ export default function HeroSection() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.4 }}
-          className="text-gold-400 font-serif italic text-lg md:text-xl mb-4 tracking-widest"
-          style={{ letterSpacing: '0.2em' }}
+          className="text-[#666666] font-serif italic text-base md:text-lg mb-6 tracking-widest uppercase"
         >
-          ✦ Trân Trọng Kính Mời ✦
+          Trân trọng kính mời bạn đến tham dự buổi lễ tốt nghiệp của
         </motion.p>
 
-        {/* Tên chủ nhân - hiệu ứng Shimmer sang trọng */}
-        {/*
-         * Dùng wrapper div + span trong để fix 2 vấn đề cùng lúc:
-         * - div có padding-top để dấu tiếng Việt (Ù, Ổ, Ấ, Ư) không bị clip
-         * - span có background-clip: text cho hiệu ứng shimmer gradient
-         */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
+          initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 1.2, delay: 0.6, ease: 'easeOut' }}
-          className="hero-title-wrapper mb-6"
+          transition={{ duration: 1.2, delay: 0.6, ease: "easeOut" }}
+          className="mb-8"
         >
-          <h1 className="hero-title font-serif font-bold shimmer-text">
+          <h1
+            className="font-serif md:text-6xl lg:text-7xl text-[#bca374] leading-tight px-4 py-2"
+            style={{ textShadow: "1px 1px 2px rgba(0,0,0,0.05)" }}
+          >
             {EVENT_INFO.name}
           </h1>
         </motion.div>
@@ -98,7 +73,7 @@ export default function HeroSection() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 1.2 }}
-          className="hero-subtitle font-sans text-white/80 mb-8 tracking-wide"
+          className="hero-subtitle font-sans text-slate-700 mb-8 tracking-wide"
         >
           Lễ Tốt Nghiệp Đại Học
         </motion.h2>
@@ -108,24 +83,32 @@ export default function HeroSection() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 1.4 }}
-          className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 mb-10"
+          className="flex flex-col sm:flex-row items-center justify-center gap-8 sm:gap-16 mb-12 border-y border-[#d1d5db] py-6"
         >
           {/* Thời gian */}
-          <div className="glass-card gold-border rounded-2xl px-6 py-4 text-center">
-            <p className="text-white/50 text-xs font-medium tracking-widest uppercase mb-1">Thời Gian</p>
-            <p className="text-gold-400 font-serif text-xl font-bold">
+          <div className="text-center px-4">
+            <p className="text-[#666666] text-xs font-medium tracking-widest uppercase mb-2">
+              Thời Gian
+            </p>
+            <p className="text-[#1a1a1a] font-serif text-xl font-bold">
               {EVENT_INFO.startTime} – {EVENT_INFO.endTime}
             </p>
-            <p className="text-white/70 text-sm mt-1">{EVENT_INFO.dateDisplay}</p>
+            <p className="text-[#666666] text-sm mt-1">
+              {EVENT_INFO.dateDisplay}
+            </p>
           </div>
 
           {/* Ngôi sao chia cách */}
-          <Star className="w-5 h-5 text-gold-500/50 hidden sm:block" />
+          <div className="w-px h-12 bg-[#d1d5db] hidden sm:block" />
 
           {/* Địa điểm */}
-          <div className="glass-card gold-border rounded-2xl px-6 py-4 text-center max-w-xs">
-            <p className="text-white/50 text-xs font-medium tracking-widest uppercase mb-1">Địa Điểm</p>
-            <p className="text-white font-semibold text-sm leading-snug">{EVENT_INFO.venue}</p>
+          <div className="text-center px-4 max-w-[200px]">
+            <p className="text-[#666666] text-xs font-medium tracking-widest uppercase mb-2">
+              Địa Điểm
+            </p>
+            <p className="text-[#1a1a1a] font-serif font-bold text-sm leading-snug">
+              {EVENT_INFO.venue}
+            </p>
           </div>
         </motion.div>
 
@@ -147,20 +130,13 @@ export default function HeroSection() {
         </motion.div>
 
         {/* Decorative corner ornaments */}
-        <div className="absolute top-4 left-4 text-gold-500/30 text-4xl font-serif select-none">❝</div>
-        <div className="absolute bottom-4 right-4 text-gold-500/30 text-4xl font-serif select-none">❞</div>
+        <div className="absolute top-4 left-4 text-gold-500/30 text-4xl font-serif select-none">
+          ❝
+        </div>
+        <div className="absolute bottom-4 right-4 text-gold-500/30 text-4xl font-serif select-none">
+          ❞
+        </div>
       </div>
-
-      {/* Scroll indicator */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 2.5, duration: 1 }}
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 z-10"
-      >
-        <span className="text-white/30 text-xs tracking-widest uppercase">Cuộn xuống</span>
-        <div className="w-px h-12 bg-gradient-to-b from-gold-500/50 to-transparent animate-pulse" />
-      </motion.div>
     </section>
   );
 }

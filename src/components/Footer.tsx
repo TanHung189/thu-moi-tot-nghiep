@@ -30,14 +30,14 @@ export default function Footer() {
           </h3>
 
           {/* Thông tin sự kiện */}
-          <p className="text-white/60 text-sm mb-1">Lễ Tốt Nghiệp Đại Học</p>
-          <p className="text-white/50 text-sm mb-6">
+          <p className="text-slate-500 text-sm mb-1">Lễ Tốt Nghiệp Đại Học</p>
+          <p className="text-slate-500 text-sm mb-6">
             {EVENT_INFO.startTime} • {EVENT_INFO.dateDisplay} • {EVENT_INFO.venue}
           </p>
 
           {/* Trích dẫn */}
           <div className="glass-card rounded-2xl p-6 max-w-lg mx-auto mb-8 gold-border">
-            <p className="font-serif italic text-white/80 text-lg leading-relaxed">
+            <p className="font-serif italic text-slate-700 text-lg leading-relaxed">
               "Đây không phải là kết thúc của hành trình,
               <br />
               mà là bước đầu của một chương mới."
@@ -50,12 +50,12 @@ export default function Footer() {
           </div>
 
           {/* Copyright */}
-          <p className="text-white/30 text-xs flex items-center justify-center gap-1">
+          <p className="text-slate-400 text-xs flex items-center justify-center gap-1">
             Được tạo với
             <Heart className="w-3 h-3 text-red-400 fill-red-400 inline mx-1" />
             cho ngày đặc biệt của {EVENT_INFO.name}
           </p>
-          <p className="text-white/20 text-xs mt-1">
+          <p className="text-slate-300 text-xs mt-1">
             © {new Date().getFullYear()} • All Rights Reserved
           </p>
         </motion.div>

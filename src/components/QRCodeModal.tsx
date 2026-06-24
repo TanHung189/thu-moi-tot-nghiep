@@ -105,7 +105,7 @@ export default function QRCodeModal() {
                 <button
                   onClick={() => setIsOpen(false)}
                   id="qr-modal-close-btn"
-                  className="text-white/50 hover:text-white transition-colors p-1 rounded-lg hover:bg-white/10"
+                  className="text-slate-500 hover:text-slate-800 transition-colors p-1 rounded-lg hover:bg-slate-100"
                   aria-label="Đóng modal QR Code"
                 >
                   <X className="w-5 h-5" />
@@ -138,13 +138,13 @@ export default function QRCodeModal() {
               </div>
 
               {/* Mô tả */}
-              <p className="text-white/60 text-sm text-center mb-4">
+              <p className="text-slate-500 text-sm text-center mb-4">
                 Quét mã QR này để mở thư mời 🎓
               </p>
 
               {/* URL rút gọn */}
               <div className="glass-card-light rounded-xl px-3 py-2 mb-4 flex items-center gap-2">
-                <span className="text-white/50 text-xs truncate flex-1 font-mono">
+                <span className="text-slate-500 text-xs truncate flex-1 font-mono">
                   {EVENT_INFO.shareUrl}
                 </span>
               </div>

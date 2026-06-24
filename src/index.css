@@ -27,10 +27,9 @@ html {
 }
 
 body {
-  /* Be Vietnam Pro — font thiết kế riêng cho tiếng Việt */
-  font-family: 'Be Vietnam Pro', system-ui, sans-serif;
-  background-color: var(--navy-950);
-  color: #ffffff;
+  font-family: 'Montserrat', system-ui, sans-serif;
+  background-color: #ffffff; /* Nền trắng tinh */
+  color: #1a1a1a;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -39,58 +38,46 @@ body {
 /* ===== Glassmorphism Component Classes ===== */
 @layer components {
   .glass-card {
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    box-shadow: 0 8px 32px rgba(7, 19, 39, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    background: transparent;
+    border: 1px solid #d1d5db; /* Viền mỏng cổ điển */
+    border-radius: 0; /* Góc vuông */
   }
 
   .glass-card-light {
-    background: rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    box-shadow: 0 4px 16px rgba(7, 19, 39, 0.3);
+    background: transparent;
+    border: 1px solid #e5e7eb;
+    border-radius: 0;
   }
 
-  /* Đổi từ gradient vàng sang gradient xanh navy-blue */
+  /* Đổi từ gradient vàng sang màu vàng gold vintage cổ điển */
   .gold-text {
-    background: linear-gradient(135deg, #1d4ed8 0%, #60a5fa 50%, #2563eb 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: #bca374;
   }
 
   .gold-border {
-    border: 1px solid rgba(59, 130, 246, 0.4);
+    border: 1px solid #bca374;
   }
 
-  /* Nút chính: nền xanh blue gradient */
+  /* Nút chính: phẳng, viền vuông, đổi màu khi hover */
   .btn-gold {
     @apply font-semibold;
-    background: linear-gradient(135deg, #1d4ed8 0%, #3b82f6 50%, #60a5fa 100%);
+    background-color: #bca374;
     color: #ffffff;
-    @apply px-6 py-3 rounded-xl transition-all duration-300;
-    box-shadow: 0 2px 12px rgba(59, 130, 246, 0.3);
+    @apply px-6 py-3 rounded-none transition-all duration-300 uppercase tracking-widest text-sm border border-[#bca374];
   }
   .btn-gold:hover {
-    box-shadow: 0 0 30px rgba(59, 130, 246, 0.6);
-    transform: scale(1.05);
-  }
-  .btn-gold:active {
-    transform: scale(0.95);
+    background-color: transparent;
+    color: #bca374;
   }
 
   .btn-glass {
-    @apply glass-card text-white font-medium;
-    @apply px-6 py-3 rounded-xl transition-all duration-300;
-    @apply hover:bg-white/10 hover:scale-105;
-    @apply active:scale-95;
-    border: 1px solid rgba(59, 130, 246, 0.25);
+    @apply bg-transparent text-[#bca374] font-medium;
+    @apply px-6 py-3 rounded-none transition-all duration-300 uppercase tracking-widest text-sm;
+    border: 1px solid #bca374;
   }
   .btn-glass:hover {
-    border-color: rgba(59, 130, 246, 0.5);
+    background-color: #bca374;
+    color: #ffffff;
   }
 
   .section-title {
@@ -113,7 +100,7 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--navy-950);
+  background: #f1f5f9;
 }
 
 /* Màu scrollbar → xanh blue */
@@ -126,38 +113,15 @@ body {
   background: rgba(59, 130, 246, 0.7);
 }
 
-/* ===== Shimmer Effect ===== */
+/* Xóa hiệu ứng shimmer vì không hợp với vintage */
 .shimmer-text {
-  background: linear-gradient(
-    90deg,
-    #1d4ed8 0%,
-    #60a5fa 25%,
-    #bfdbfe 50%,
-    #60a5fa 75%,
-    #1d4ed8 100%
-  );
-  background-size: 200% auto;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  animation: shimmer 3s linear infinite;
-  /*
-   * ✅ Fix dấu tiếng Việt bị clip với -webkit-background-clip: text:
-   * Không dùng padding trực tiếp vào đây (phá gradient).
-   * Thay vào đó dùng line-height + hero-title-wrapper có padding.
-   */
+  color: #1a1a1a;
   line-height: 1.5;
 }
 
-/* Wrapper cho tiêu đề chính — padding để dấu tiếng Việt không bị clip */
 .hero-title-wrapper {
   padding-top: 0.1em;
   overflow: visible;
-}
-
-@keyframes shimmer {
-  0% { background-position: 0% center; }
-  100% { background-position: 200% center; }
 }
 
 /* ===== Particles Background — Đổi từ vàng sang blue ===== */
@@ -234,27 +198,19 @@ body {
   animation-delay: -1s;
 }
 
-/* ===== Audio Player Disk ===== */
-.vinyl-disk {
-  border-radius: 50%;
-  background: conic-gradient(
-    from 0deg,
-    #1a1a1a 0deg,
-    #2a2a2a 30deg,
-    #1a1a1a 60deg,
-    #2a2a2a 90deg,
-    #1a1a1a 120deg,
-    #2a2a2a 150deg,
-    #1a1a1a 180deg,
-    #2a2a2a 210deg,
-    #1a1a1a 240deg,
-    #2a2a2a 270deg,
-    #1a1a1a 300deg,
-    #2a2a2a 330deg,
-    #1a1a1a 360deg
-  );
-  /* Đổi viền từ vàng → xanh blue */
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5), 0 4px 20px rgba(0,0,0,0.6);
+/* ===== Custom Form ===== */
+.form-input {
+  @apply w-full bg-transparent rounded-none px-4 py-3 text-[#1a1a1a] placeholder-[#9ca3af];
+  @apply focus:outline-none transition-all duration-200 border-b border-gray-300;
+  font-family: 'Montserrat', system-ui, sans-serif;
+}
+.form-input:focus {
+  border-bottom-color: #1a1a1a;
+}
+
+.form-label {
+  @apply block text-sm font-medium text-[#666666] mb-2 uppercase tracking-widest;
+  font-family: 'Montserrat', system-ui, sans-serif;
 }
 
 /* ===== Gallery Masonry ===== */
@@ -296,21 +252,7 @@ body {
   transform: scale(1.1) !important;
 }
 
-/* ===== Form Styles ===== */
-.form-input {
-  @apply w-full glass-card rounded-xl px-4 py-3 text-white placeholder-white/40;
-  @apply focus:outline-none transition-all duration-200;
-  font-family: 'Be Vietnam Pro', system-ui, sans-serif;
-}
-.form-input:focus {
-  border-color: rgba(59, 130, 246, 0.6);
-  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.4);
-}
 
-.form-label {
-  @apply block text-sm font-medium text-white/70 mb-2;
-  font-family: 'Be Vietnam Pro', system-ui, sans-serif;
-}
 
 /* ===== Section Padding ===== */
 .section-padding {
@@ -326,4 +268,13 @@ body {
 .hero-subtitle {
   font-size: clamp(1rem, 3vw, 1.5rem);
   font-family: 'Be Vietnam Pro', system-ui, sans-serif;
+}
+
+/* ===== Utility classes ===== */
+.scrollbar-none {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
 }
