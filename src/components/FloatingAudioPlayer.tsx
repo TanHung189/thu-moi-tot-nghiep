@@ -1,59 +1,32 @@
-// Component AudioPlayer - Đĩa nhạc vinyl xoay ở góc màn hình
+// Component AudioPlayer - Nút nhạc nền nổi, có thể kéo thả
 import { useState, useRef, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Play, Pause, Music, Volume2, VolumeX } from "lucide-react";
+import { motion, useMotionValue } from "framer-motion";
+import { Volume2, VolumeX } from "lucide-react";
+
+const MUSIC_URL = "/music.mp3";
 
 export default function FloatingAudioPlayer() {
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
   const [hasError, setHasError] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
-  const userToggledRef = useRef(false); // Lưu trạng thái xem người dùng đã tự bấm chưa
+  const userToggledRef = useRef(false);
+  const isDraggingRef = useRef(false);
 
-  // ⚠️ THAY ĐỔI: Thay URL bên dưới bằng link nhạc của bạn
-  // Gợi ý nguồn nhạc miễn phí:
-  // - Pixabay: https://pixabay.com/music/ (search "acoustic graduation")
-  // - Free Music Archive: https://freemusicarchive.org/
-  // - Hoặc upload file MP3 lên GitHub repository cùng project này
-  // Ví dụ nếu để file trong /public/music.mp3: '/music.mp3'
-  // ⚠️ QUAN TRỌNG: Phải là link TRỰC TIẾP tới file có đuôi .mp3
-  // Link cũ đuôi .ogg sẽ bị LỖI TRÊN IPHONE (Safari không hỗ trợ ogg).
-  // Tôi đã đổi sang link .mp3 chuẩn để mọi điện thoại đều nghe được.
-  const MUSIC_URL =
-    "https://pixabay.com/music/modern-classical-inspiring-cinematic-piano-162193/";
+  // Vị trí kéo thả - reset về 0,0 khi reload trang
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
 
+  // --- Audio Logic ---
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
 
     audio.loop = true;
     audio.volume = 0.4;
-
-    const handleError = () => {
-      setHasError(true);
-      setIsPlaying(false);
-    };
-
-    audio.addEventListener("error", handleError);
-
     let isMounted = true;
 
-    const handleInteraction = async () => {
-      // Nếu người dùng đã tự thao tác (bấm tắt/bật) thì hủy bỏ tính năng autoplay chìm
-      if (!isMounted || userToggledRef.current) {
-        removeListeners();
-        return;
-      }
-      try {
-        await audio.play();
-        setIsPlaying(true);
-      } catch (e) {
-        // Bỏ qua lỗi
-      } finally {
-        removeListeners();
-      }
-    };
+    const handleError = () => { setHasError(true); setIsPlaying(false); };
+    audio.addEventListener("error", handleError);
 
     const removeListeners = () => {
       document.removeEventListener("click", handleInteraction);
@@ -61,78 +34,82 @@ export default function FloatingAudioPlayer() {
       document.removeEventListener("scroll", handleInteraction);
     };
 
-    // Tự động phát nhạc khi mở trang web (Autoplay)
+    const handleInteraction = async () => {
+      if (!isMounted || userToggledRef.current) { removeListeners(); return; }
+      try { await audio.play(); setIsPlaying(true); }
+      catch { /* ignore */ }
+      finally { removeListeners(); }
+    };
+
     const tryAutoplay = async () => {
-      try {
-        await audio.play();
-        if (isMounted) setIsPlaying(true);
-      } catch (err) {
-        // Trình duyệt chặn Autoplay (chính sách bảo mật của Chrome/Safari/...)
-        // Giải pháp: Chờ người dùng tương tác lần đầu tiên
+      try { await audio.play(); if (isMounted) setIsPlaying(true); }
+      catch {
         document.addEventListener("click", handleInteraction, { once: true });
-        document.addEventListener("touchstart", handleInteraction, {
-          once: true,
-        });
+        document.addEventListener("touchstart", handleInteraction, { once: true });
         document.addEventListener("scroll", handleInteraction, { once: true });
       }
     };
 
     tryAutoplay();
-
     return () => {
       isMounted = false;
       audio.removeEventListener("error", handleError);
-      audio.pause(); // Dừng nhạc nếu component bị unmount (fix lỗi StrictMode)
-      removeListeners(); // Xóa sự kiện
+      audio.pause();
+      removeListeners();
     };
   }, []);
 
   const togglePlay = async () => {
-    userToggledRef.current = true; // Đánh dấu người dùng đã chủ động tương tác
+    // Không bật/tắt nhạc nếu vừa kéo xong
+    if (isDraggingRef.current) return;
+    userToggledRef.current = true;
     const audio = audioRef.current;
     if (!audio || hasError) return;
-
     try {
-      if (isPlaying) {
-        audio.pause();
-        setIsPlaying(false);
-      } else {
-        await audio.play();
-        setIsPlaying(true);
-      }
-    } catch {
-      setHasError(true);
-    }
+      if (isPlaying) { audio.pause(); setIsPlaying(false); }
+      else { await audio.play(); setIsPlaying(true); }
+    } catch { setHasError(true); }
   };
 
   return (
-    <div
-      className="floating-btn"
-      style={{ bottom: "1rem", left: "1rem" }}
-      aria-label="Trình phát nhạc nổi"
+    <motion.div
+      drag
+      dragMomentum={false}
+      dragElastic={0.05}
+      style={{ x, y, bottom: "1rem", left: "1rem" }}
+      className="floating-btn touch-none"
+      onDragStart={() => { isDraggingRef.current = true; }}
+      onDragEnd={() => {
+        // Lưu vị trí mới sau khi thả
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify({ x: x.get(), y: y.get() }));
+        } catch {}
+        // Delay nhỏ để tránh click ngay sau drag
+        setTimeout(() => { isDraggingRef.current = false; }, 100);
+      }}
+      whileDrag={{ scale: 1.12, cursor: "grabbing" }}
     >
-      <audio ref={audioRef} src={MUSIC_URL} preload="none" aria-hidden="true" />
+      <audio ref={audioRef} src={MUSIC_URL} preload="auto" aria-hidden="true" />
 
       <motion.button
         onClick={togglePlay}
         id="audio-player-toggle-btn"
-        className="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center bg-white/80 backdrop-blur-sm border border-[#bca374] shadow-sm text-[#bca374] hover:bg-[#bca374] hover:text-white opacity-80 hover:opacity-100 transition-all rounded-none"
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
+        className="w-11 h-11 flex items-center justify-center bg-white/90 backdrop-blur-sm border-2 border-[#bca374] shadow-lg text-[#bca374] hover:bg-[#bca374] hover:text-white transition-colors rounded-full select-none cursor-grab"
+        whileHover={{ scale: 1.08 }}
+        whileTap={{ scale: 0.92 }}
         aria-label={isPlaying ? "Tạm dừng nhạc" : "Phát nhạc"}
       >
-        {isPlaying ? (
-          <Volume2 className="w-5 h-5" strokeWidth={1.5} />
-        ) : (
-          <VolumeX className="w-5 h-5" strokeWidth={1.5} />
-        )}
+        {isPlaying
+          ? <Volume2 className="w-5 h-5" strokeWidth={2} />
+          : <VolumeX className="w-5 h-5" strokeWidth={2} />
+        }
       </motion.button>
 
       {hasError && (
-        <span className="absolute -top-6 right-0 text-red-500/80 text-[10px] whitespace-nowrap bg-white px-2 py-1 border border-red-200 shadow-sm">
-          Lỗi link nhạc
+        <span className="absolute -top-7 left-0 text-red-500/90 text-[10px] whitespace-nowrap bg-white px-2 py-1 border border-red-200 shadow rounded-full">
+          Lỗi nhạc
         </span>
       )}
-    </div>
+    </motion.div>
   );
 }

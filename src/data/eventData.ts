@@ -23,7 +23,7 @@ export const EVENT_INFO = {
   venue: "Trường Đại học An Giang - ĐHQG TP.HCM",
   address: "18 Ung Văn Khiêm, Đông Xuyên, Thành phố Long Xuyên, An Giang",
   // ⚠️ THAY ĐỔI: URL trang web của bạn khi deploy (dùng cho QR Code)
-  shareUrl: "https://your-username.github.io/graduation-invitation/",
+  shareUrl: "https://thu-moi-tot-nghiep-pi.vercel.app/",
 };
 
 // ===== Lời chúc mẫu ban đầu =====

@@ -1,6 +1,6 @@
 // Component QR Code Modal - Hiển thị mã QR để chia sẻ link trang web
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useRef } from 'react';
+import { motion, AnimatePresence, useMotionValue } from 'framer-motion';
 import { QrCode, X, Copy, Check, Share2 } from 'lucide-react';
 // qrcode.react v3+ sử dụng named exports
 import { QRCodeSVG } from 'qrcode.react';
@@ -9,6 +9,11 @@ import { EVENT_INFO } from '../data/eventData';
 export default function QRCodeModal() {
   const [isOpen, setIsOpen] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
+  const isDraggingRef = useRef(false);
+
+  // Vị trí kéo thả - reset về 0,0 khi reload trang
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
 
   // Sao chép link vào clipboard
   const copyToClipboard = async () => {
@@ -49,27 +54,39 @@ export default function QRCodeModal() {
 
   return (
     <>
-      {/* Nút nổi QR Code */}
-      <motion.button
-        onClick={() => setIsOpen(true)}
-        id="qr-code-open-btn"
-        className="floating-btn opacity-80 hover:opacity-100 transition-opacity"
-        style={{ bottom: '1rem', right: '1rem' }}
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.95 }}
-        aria-label="Mở mã QR để chia sẻ thư mời"
-        aria-haspopup="dialog"
+      {/* Nút nổi QR Code - Có thể kéo để di chuyển */}
+      <motion.div
+        drag
+        dragMomentum={false}
+        dragElastic={0.05}
+        style={{ x, y, bottom: '1rem', right: '1rem' }}
+        className="floating-btn touch-none opacity-80 hover:opacity-100 transition-opacity"
+        onDragStart={() => { isDraggingRef.current = true; }}
+        onDragEnd={() => {
+          setTimeout(() => { isDraggingRef.current = false; }, 100);
+        }}
+        whileDrag={{ scale: 1.12, cursor: "grabbing" }}
       >
-        <div
-          className="w-10 h-10 md:w-14 md:h-14 rounded-full flex items-center justify-center"
-          style={{
-            background: 'linear-gradient(135deg, #1d4ed8, #3b82f6)',
-            boxShadow: '0 0 20px rgba(59,130,246,0.5), 0 4px 15px rgba(0,0,0,0.4)',
-          }}
+        <motion.button
+          onClick={() => { if (!isDraggingRef.current) setIsOpen(true); }}
+          id="qr-code-open-btn"
+          whileHover={{ scale: 1.08 }}
+          whileTap={{ scale: 0.92 }}
+          className="select-none cursor-grab"
+          aria-label="Mở mã QR để chia sẻ thư mời"
+          aria-haspopup="dialog"
         >
-          <QrCode className="w-7 h-7 text-navy-950" />
-        </div>
-      </motion.button>
+          <div
+            className="w-11 h-11 rounded-full flex items-center justify-center"
+            style={{
+              background: 'linear-gradient(135deg, #1d4ed8, #3b82f6)',
+              boxShadow: '0 0 20px rgba(59,130,246,0.4), 0 4px 12px rgba(0,0,0,0.3)',
+            }}
+          >
+            <QrCode className="w-6 h-6 text-white" />
+          </div>
+        </motion.button>
+      </motion.div>
 
       {/* Modal QR Code */}
       <AnimatePresence>
