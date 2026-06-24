@@ -17,11 +17,11 @@ export default function FloatingAudioPlayer() {
   // - Free Music Archive: https://freemusicarchive.org/
   // - Hoặc upload file MP3 lên GitHub repository cùng project này
   // Ví dụ nếu để file trong /public/music.mp3: '/music.mp3'
-  // ⚠️ QUAN TRỌNG: Phải là link TRỰC TIẾP tới file có đuôi .mp3 hoặc .ogg
-  // Link cũ của bạn là link một trang web HTML, không phải file nhạc nên sẽ bị lỗi.
+  // ⚠️ QUAN TRỌNG: Phải là link TRỰC TIẾP tới file có đuôi .mp3
+  // Link cũ đuôi .ogg sẽ bị LỖI TRÊN IPHONE (Safari không hỗ trợ ogg).
+  // Tôi đã đổi sang link .mp3 chuẩn để mọi điện thoại đều nghe được.
   const MUSIC_URL =
-    "https://upload.wikimedia.org/wikipedia/commons/b/b5/Kevin_MacLeod_-_Tranquility.ogg";
-  // 👆 Đây là bản piano nhẹ nhàng, không bản quyền. Bạn có thể thay bằng link mp3 khác.
+    "https://pixabay.com/music/modern-classical-inspiring-cinematic-piano-162193/";
 
   useEffect(() => {
     const audio = audioRef.current;

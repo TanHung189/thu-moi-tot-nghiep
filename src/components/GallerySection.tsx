@@ -90,23 +90,23 @@ function Lightbox({
           </button>
 
           {/* Phần Ảnh */}
-          <div className="flex-1 relative bg-black/5 flex items-center justify-center p-4 lg:p-8">
+          <div className="relative bg-black/5 flex items-center justify-center p-2 lg:p-8 h-[45vh] shrink-0 lg:h-auto lg:flex-1">
             <img
               src={currentPhoto.image_url}
               alt={currentPhoto.caption || 'Kỷ niệm'}
               className="max-w-full max-h-full object-contain drop-shadow-lg"
             />
 
-            <button onClick={onPrev} className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-3 hover:bg-[#bca374] hover:text-white transition-colors">
-              <ChevronLeft className="w-6 h-6" strokeWidth={1.5} />
+            <button onClick={onPrev} className="absolute left-2 lg:left-4 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-2 lg:p-3 hover:bg-[#bca374] hover:text-white transition-colors">
+              <ChevronLeft className="w-5 h-5 lg:w-6 lg:h-6" strokeWidth={1.5} />
             </button>
-            <button onClick={onNext} className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-3 hover:bg-[#bca374] hover:text-white transition-colors">
-              <ChevronRight className="w-6 h-6" strokeWidth={1.5} />
+            <button onClick={onNext} className="absolute right-2 lg:right-4 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-2 lg:p-3 hover:bg-[#bca374] hover:text-white transition-colors">
+              <ChevronRight className="w-5 h-5 lg:w-6 lg:h-6" strokeWidth={1.5} />
             </button>
           </div>
 
           {/* Phần Tương tác (Caption, Comments) */}
-          <div className="w-full lg:w-[400px] flex flex-col bg-white border-l border-gray-100">
+          <div className="flex-1 lg:w-[400px] flex flex-col bg-white border-l border-gray-100 min-h-0">
             {/* Header: User / Tương tác */}
             <div className="p-4 border-b border-gray-100 flex items-center justify-between">
               <div className="font-semibold text-gray-800">
@@ -199,8 +199,7 @@ function GalleryCard({
   return (
     <motion.div
       initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
+      animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: (index % 10) * 0.05 }}
       className="masonry-item group relative break-inside-avoid mb-4"
       onClick={onClick}
@@ -277,7 +276,6 @@ export default function GallerySection() {
     const photosToGroup = isExpanded ? photos : photos.slice(0, 6);
     
     photosToGroup.forEach(photo => {
-      // Use YYYY-MM as the key for reliable grouping and sorting
       const groupKey = photo.timeline_date ? photo.timeline_date.substring(0, 7) : 'Chưa phân loại';
       if (!groups[groupKey]) groups[groupKey] = [];
       groups[groupKey].push(photo);
@@ -287,7 +285,6 @@ export default function GallerySection() {
       .sort((a, b) => {
         if (a[0] === 'Chưa phân loại') return 1;
         if (b[0] === 'Chưa phân loại') return -1;
-        // Since key is YYYY-MM, string comparison works perfectly for descending order
         return b[0].localeCompare(a[0]);
       })
       .map(([key, groupPhotos]) => {
@@ -298,7 +295,17 @@ export default function GallerySection() {
         }
         return { key, displayName, groupPhotos };
       });
-  }, [photos]);
+  // ✅ FIX: isExpanded phải nằm trong dependency array
+  }, [photos, isExpanded]);
+
+  // Khi người dùng bấm "Xem Tất Cả", nếu có thêm ảnh chưa load thì fetch luôn
+  const handleExpandAll = () => {
+    setIsExpanded(true);
+    if (hasMore && !loading) {
+      fetchPhotos();
+    }
+  };
+
 
   return (
     <section id="gallery" className="section-padding relative z-10 bg-slate-50/50">
@@ -372,22 +379,38 @@ export default function GallerySection() {
         </div>
 
         {/* Infinite Scroll trigger or View All button */}
-        {!isExpanded && photos.length > 6 ? (
+        {!isExpanded && photos.length > 0 ? (
           <div className="w-full py-8 flex justify-center mt-4">
             <button
-              onClick={() => setIsExpanded(true)}
-              className="px-8 py-3 bg-[#bca374] text-white rounded-full font-medium hover:bg-gold-600 transition-colors shadow-lg hover:shadow-xl"
+              onClick={handleExpandAll}
+              className="px-8 py-3 bg-[#bca374] text-white rounded-full font-medium hover:bg-[#a08950] transition-colors shadow-lg hover:shadow-xl"
             >
-              Xem Tất Cả Kỷ Niệm
+              Xem Tất Cả Kỷ Niệm ({photos.length}+)
             </button>
           </div>
         ) : (
-          <div ref={ref} className="w-full py-8 flex justify-center mt-8">
-            {loading && (
-              <div className="flex flex-col items-center gap-2">
-                <div className="w-8 h-8 border-4 border-[#bca374]/30 border-t-[#bca374] rounded-full animate-spin"></div>
-                <span className="text-sm text-gray-500 font-medium tracking-wide">Đang tải thêm kỷ niệm...</span>
-              </div>
+          <div className="w-full flex flex-col items-center gap-4 mt-8">
+            {/* Infinite scroll sentinel */}
+            <div ref={ref} className="w-full flex justify-center py-4">
+              {loading && (
+                <div className="flex flex-col items-center gap-2">
+                  <div className="w-8 h-8 border-4 border-[#bca374]/30 border-t-[#bca374] rounded-full animate-spin"></div>
+                  <span className="text-sm text-gray-500 font-medium tracking-wide">Đang tải thêm kỷ niệm...</span>
+                </div>
+              )}
+            </div>
+            {/* Nút Thu Gọn - chỉ hiện khi không còn đang tải */}
+            {!loading && (
+              <button
+                onClick={() => {
+                  setIsExpanded(false);
+                  // Cuộn lên phần gallery để tránh lạc chỗ
+                  document.getElementById('gallery')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }}
+                className="flex items-center gap-2 px-6 py-2.5 bg-white border border-[#bca374]/40 text-[#bca374] rounded-full font-medium hover:bg-[#bca374] hover:text-white transition-all shadow-sm text-sm"
+              >
+                ↑ Thu Gọn
+              </button>
             )}
           </div>
         )}
