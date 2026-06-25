@@ -4,7 +4,6 @@
 // ============================================================
 
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
 
 // Các component chính
 import HeroSection from './components/HeroSection';
@@ -22,64 +21,6 @@ import AdminGalleryManager from './components/AdminGalleryManager';
 import { type GuestMessage } from './data/eventData';
 import { supabase } from './lib/supabaseClient';
 
-// Component Navigation (thanh điều hướng cố định phía trên)
-function Navbar() {
-  const navLinks = [
-    { href: '#hero', label: 'Trang Chủ' },
-    { href: '#countdown', label: 'Đếm Ngược' },
-    { href: '#location', label: 'Địa Điểm' },
-    { href: '#gallery', label: 'Kỷ Niệm' },
-    { href: '#rsvp', label: 'RSVP' },
-    { href: '#guestbook', label: 'Lưu Bút' },
-  ];
-
-  return (
-    <motion.nav
-      initial={{ y: -100, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.8, delay: 0.5 }}
-      className="fixed top-0 left-0 right-0 z-40"
-      role="navigation"
-      aria-label="Navigation chính"
-    >
-      <div
-        className="mx-4 mt-4 px-4 py-3 border-b border-[#e5e7eb] bg-[#f4f4f4]/90"
-        style={{
-          backdropFilter: 'blur(10px)',
-          WebkitBackdropFilter: 'blur(10px)',
-        }}
-      >
-        {/* Desktop nav */}
-        <div className="hidden md:flex items-center justify-center gap-1">
-          {navLinks.map((link) => (
-            <a
-              key={link.href}
-              href={link.href}
-              className="px-3 py-1.5 text-sm text-slate-600 hover:text-gold-400 rounded-xl hover:bg-slate-100 transition-all duration-200 font-medium"
-              aria-label={`Điều hướng đến ${link.label}`}
-            >
-              {link.label}
-            </a>
-          ))}
-        </div>
-
-        {/* Mobile nav - scroll ngang */}
-        <div className="md:hidden flex items-center gap-1 overflow-x-auto scrollbar-none pb-1">
-          {navLinks.map((link) => (
-            <a
-              key={link.href}
-              href={link.href}
-              className="shrink-0 px-3 py-1.5 text-xs text-slate-600 hover:text-gold-400 rounded-xl hover:bg-slate-100 transition-all duration-200 font-medium"
-              aria-label={`Điều hướng đến ${link.label}`}
-            >
-              {link.label}
-            </a>
-          ))}
-        </div>
-      </div>
-    </motion.nav>
-  );
-}
 
 // Component phân cách section sang trọng
 function SectionDivider() {
@@ -173,10 +114,7 @@ export default function App() {
 
   return (
     <div className="relative min-h-screen bg-transparent overflow-x-hidden">
-      {/* Layer 1: Navigation */}
-      <Navbar />
-
-      {/* Layer 2: Nội dung chính */}
+      {/* Layer 1: Nội dung chính */}
       <main className="relative z-10">
         {/* Hero - Phần đầu trang */}
         <HeroSection />

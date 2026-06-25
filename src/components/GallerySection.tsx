@@ -1,7 +1,7 @@
 // Component Gallery - Bộ sưu tập ảnh kỷ niệm dạng Timeline với Infinite Scroll
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Images, X, ChevronLeft, ChevronRight, Heart, MessageCircle, Send, Upload } from 'lucide-react';
+import { Images, X, ChevronLeft, ChevronRight, Heart, MessageCircle, Send, Upload, Film } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { useInView } from 'react-intersection-observer';
@@ -89,13 +89,24 @@ function Lightbox({
             <X className="w-6 h-6" strokeWidth={1.5} />
           </button>
 
-          {/* Phần Ảnh */}
+          {/* Phần Ảnh hoặc Video */}
           <div className="relative bg-black/5 flex items-center justify-center p-2 lg:p-8 h-[45vh] shrink-0 lg:h-auto lg:flex-1">
-            <img
-              src={currentPhoto.image_url}
-              alt={currentPhoto.caption || 'Kỷ niệm'}
-              className="max-w-full max-h-full object-contain drop-shadow-lg"
-            />
+            {currentPhoto.media_type === 'video' ? (
+              <video
+                src={currentPhoto.image_url}
+                className="max-w-full max-h-full object-contain drop-shadow-lg"
+                controls
+                autoPlay
+                loop
+                playsInline
+              />
+            ) : (
+              <img
+                src={currentPhoto.image_url}
+                alt={currentPhoto.caption || 'Kỷ niệm'}
+                className="max-w-full max-h-full object-contain drop-shadow-lg"
+              />
+            )}
 
             <button onClick={onPrev} className="absolute left-2 lg:left-4 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-2 lg:p-3 hover:bg-[#bca374] hover:text-white transition-colors">
               <ChevronLeft className="w-5 h-5 lg:w-6 lg:h-6" strokeWidth={1.5} />
@@ -205,12 +216,35 @@ function GalleryCard({
       onClick={onClick}
     >
       <div className="relative w-full overflow-hidden border-[4px] border-white shadow-sm p-1 bg-white rounded-xl">
-        <img
-          src={image.image_url}
-          alt={image.caption || 'Kỷ niệm'}
-          className="w-full h-auto object-cover transition-all duration-700 filter group-hover:scale-105 rounded-lg"
-          loading="lazy"
-        />
+        {image.media_type === 'video' ? (
+          <>
+            <video
+              src={image.image_url}
+              className="w-full h-auto object-cover transition-all duration-700 group-hover:scale-105 rounded-lg"
+              muted
+              preload="metadata"
+              playsInline
+              loop
+              onMouseEnter={e => (e.currentTarget as HTMLVideoElement).play()}
+              onMouseLeave={e => {
+                const v = e.currentTarget as HTMLVideoElement;
+                v.pause();
+                v.currentTime = 0;
+              }}
+            />
+            {/* Badge Video */}
+            <div className="absolute top-3 left-3 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded-md flex items-center gap-1 pointer-events-none">
+              <Film className="w-3 h-3" /> Video
+            </div>
+          </>
+        ) : (
+          <img
+            src={image.image_url}
+            alt={image.caption || 'Kỷ niệm'}
+            className="w-full h-auto object-cover transition-all duration-700 filter group-hover:scale-105 rounded-lg"
+            loading="lazy"
+          />
+        )}
         {/* Overlay Hover */}
         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100 rounded-lg">
           <div className="flex items-center gap-4 text-white font-medium drop-shadow-md">

@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { useGallery, type GalleryPhoto } from '../hooks/useGallery';
 import { format, parseISO } from 'date-fns';
-import { Upload, Trash2, X, CheckCircle, AlertCircle, Edit2 } from 'lucide-react';
+import { Upload, Trash2, X, CheckCircle, Edit2, Film, ImageIcon } from 'lucide-react';
 import EXIF from 'exif-js';
 import imageCompression from 'browser-image-compression';
 
@@ -12,22 +12,17 @@ const extractDateFromImage = (file: File): Promise<string> => {
       EXIF.getData(file as any, function(this: any) {
         const dateTimeOriginal = EXIF.getTag(this, "DateTimeOriginal");
         if (dateTimeOriginal) {
-          // EXIF dates look like "YYYY:MM:DD HH:MM:SS"
           const parts = dateTimeOriginal.split(' ')[0].split(':');
           if (parts.length === 3) {
             resolve(`${parts[0]}-${parts[1]}-${parts[2]}`);
             return;
           }
         }
-        
-        // Fallback 1: Date from file last modified (if available)
         if (file.lastModified) {
            const d = new Date(file.lastModified);
            resolve(d.toISOString().split('T')[0]);
            return;
         }
-
-        // Fallback 2: Today
         resolve(new Date().toISOString().split('T')[0]);
       });
     } catch (e) {
@@ -42,15 +37,20 @@ const extractDateFromImage = (file: File): Promise<string> => {
   });
 };
 
+const isVideoFile = (file: File) => file.type.startsWith('video/');
+const isVideoUrl = (url: string) => {
+  const ext = url.split('?')[0].split('.').pop()?.toLowerCase();
+  return ['mp4', 'webm', 'mov', 'avi', 'mkv'].includes(ext || '');
+};
+
 export default function AdminGalleryManager() {
-  // Đã bỏ yêu cầu mật khẩu theo yêu cầu của bạn: ai cũng có thể truy cập
   const [isAuthenticated, setIsAuthenticated] = useState(true);
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
 
-  const { photos, fetchPhotos, setPhotos } = useGallery('admin'); // Re-use hook for fetching
+  const { photos, fetchPhotos, setPhotos } = useGallery('admin');
   const [isUploading, setIsUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState<{ total: number, current: number } | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<{ total: number, current: number, fileName?: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // States for Edit Modal
@@ -78,44 +78,60 @@ export default function AdminGalleryManager() {
     setUploadProgress({ total: files.length, current: 0 });
 
     const newPhotos: GalleryPhoto[] = [];
+    let successCount = 0;
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
+      const isVideo = isVideoFile(file);
+
+      setUploadProgress({ total: files.length, current: i, fileName: file.name });
+
       try {
-        // Lấy ngày gốc từ EXIF TRƯỚC KHI nén ảnh (vì nén ảnh sẽ làm mất EXIF)
-        const photoDate = await extractDateFromImage(file);
+        let fileToUpload: File | Blob = file;
+        let photoDate = new Date().toISOString().split('T')[0];
 
-        // Nén ảnh
-        const options = {
-          maxSizeMB: 0.4, // Nén xuống khoảng 400KB
-          maxWidthOrHeight: 1920, // Đảm bảo độ phân giải đủ lớn để xem Full HD
-          useWebWorker: true,
-        };
-        const compressedFile = await imageCompression(file, options);
+        if (isVideo) {
+          // Lấy ngày từ lastModified cho video
+          if (file.lastModified) {
+            photoDate = new Date(file.lastModified).toISOString().split('T')[0];
+          }
+          // Không nén video
+          fileToUpload = file;
+        } else {
+          // Lấy EXIF date từ ảnh
+          photoDate = await extractDateFromImage(file);
+          // Nén ảnh
+          const options = {
+            maxSizeMB: 0.4,
+            maxWidthOrHeight: 1920,
+            useWebWorker: true,
+          };
+          fileToUpload = await imageCompression(file, options);
+        }
 
-        // 1. Upload to Storage
-        const fileExt = file.name.split('.').pop() || 'jpg';
+        // Upload to Storage
+        const fileExt = file.name.split('.').pop() || (isVideo ? 'mp4' : 'jpg');
         const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
-        const filePath = `${fileName}`;
 
         const { error: uploadError } = await supabase.storage
           .from('gallery')
-          .upload(filePath, compressedFile);
+          .upload(fileName, fileToUpload);
 
         if (uploadError) throw uploadError;
 
-        // 2. Get Public URL
+        // Get Public URL
         const { data: { publicUrl } } = supabase.storage
           .from('gallery')
-          .getPublicUrl(filePath);
+          .getPublicUrl(fileName);
 
-        // 3. Save to Database
+        // Save to Database (kèm media_type)
         const { data: dbData, error: dbError } = await supabase
           .from('gallery_photos')
           .insert([{ 
             image_url: publicUrl, 
             caption: '', 
-            timeline_date: photoDate 
+            timeline_date: photoDate,
+            media_type: isVideo ? 'video' : 'image',
           }])
           .select()
           .single();
@@ -124,12 +140,11 @@ export default function AdminGalleryManager() {
         
         if (dbData) {
           newPhotos.push(dbData as GalleryPhoto);
+          successCount++;
         }
 
       } catch (err) {
         console.error('Lỗi khi upload file', file.name, err);
-      } finally {
-        setUploadProgress(prev => prev ? { ...prev, current: prev.current + 1 } : null);
       }
     }
 
@@ -137,32 +152,26 @@ export default function AdminGalleryManager() {
     setUploadProgress(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
     
-    // Update state to show new photos immediately at the top
     if (newPhotos.length > 0) {
       setPhotos(prev => [...newPhotos, ...prev]);
     }
-    alert(`Đã upload thành công ${newPhotos.length}/${files.length} ảnh!`);
+    alert(`Đã upload thành công ${successCount}/${files.length} file!`);
   };
 
   const handleDelete = async (id: string, imageUrl: string) => {
-    if (!window.confirm('Bạn có chắc chắn muốn xóa ảnh này không?')) return;
+    if (!window.confirm('Bạn có chắc chắn muốn xóa file này không?')) return;
 
     try {
-      // 1. Delete from Storage (Optional, but good practice)
-      const fileName = imageUrl.split('/').pop();
+      const fileName = imageUrl.split('/').pop()?.split('?')[0];
       if (fileName) {
         await supabase.storage.from('gallery').remove([fileName]);
       }
-
-      // 2. Delete from Database
       const { error } = await supabase.from('gallery_photos').delete().eq('id', id);
       if (error) throw error;
-
-      // 3. Update UI
       setPhotos(prev => prev.filter(p => p.id !== id));
     } catch (err) {
       console.error('Lỗi khi xóa', err);
-      alert('Không thể xóa ảnh. Vui lòng thử lại.');
+      alert('Không thể xóa file. Vui lòng thử lại.');
     }
   };
 
@@ -221,30 +230,38 @@ export default function AdminGalleryManager() {
     );
   }
 
+  const imageCount = photos.filter(p => (p.media_type || 'image') === 'image').length;
+  const videoCount = photos.filter(p => p.media_type === 'video').length;
+
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       {/* Header Admin */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-40 shadow-sm">
         <div className="max-w-6xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <h1 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-            <CheckCircle className="text-green-500 w-5 h-5" />
-            Quản Lý Bộ Sưu Tập Kỷ Niệm
-          </h1>
+          <div>
+            <h1 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+              <CheckCircle className="text-green-500 w-5 h-5" />
+              Quản Lý Bộ Sưu Tập Kỷ Niệm
+            </h1>
+            <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-3">
+              <span className="flex items-center gap-1"><ImageIcon className="w-3 h-3" />{imageCount} ảnh</span>
+              <span className="flex items-center gap-1"><Film className="w-3 h-3" />{videoCount} video</span>
+            </p>
+          </div>
           
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-500 font-medium">Tổng: {photos.length} ảnh</span>
+          <div className="flex items-center gap-3">
             <button 
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading}
               className="bg-[#1a1a1a] hover:bg-gray-800 text-white px-5 py-2.5 rounded-lg flex items-center gap-2 font-medium transition-colors disabled:opacity-70"
             >
               <Upload className="w-4 h-4" />
-              Upload Ảnh
+              Upload Ảnh / Video
             </button>
             <input 
               type="file" 
               multiple 
-              accept="image/*" 
+              accept="image/*,video/*" 
               className="hidden" 
               ref={fileInputRef}
               onChange={handleFileUpload}
@@ -257,48 +274,85 @@ export default function AdminGalleryManager() {
       {isUploading && uploadProgress && (
         <div className="max-w-6xl mx-auto px-4 mt-6">
           <div className="bg-blue-50 border border-blue-200 text-blue-800 p-4 rounded-lg flex items-center gap-3">
-            <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
-            <p className="font-medium">Đang tải lên {uploadProgress.current} / {uploadProgress.total} ảnh...</p>
+            <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin shrink-0" />
+            <div className="flex-1">
+              <p className="font-medium">
+                Đang tải lên {uploadProgress.current + 1} / {uploadProgress.total} file...
+              </p>
+              {uploadProgress.fileName && (
+                <p className="text-xs mt-0.5 text-blue-600 truncate">{uploadProgress.fileName}</p>
+              )}
+              <div className="mt-2 h-1.5 bg-blue-100 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-blue-500 rounded-full transition-all duration-300"
+                  style={{ width: `${((uploadProgress.current) / uploadProgress.total) * 100}%` }}
+                />
+              </div>
+            </div>
           </div>
         </div>
       )}
 
-      {/* Grid danh sách ảnh */}
+      {/* Grid danh sách ảnh và video */}
       <div className="max-w-6xl mx-auto px-4 mt-8">
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-          {photos.map((photo) => (
-            <div key={photo.id} className="bg-white rounded-lg border border-gray-200 overflow-hidden group shadow-sm hover:shadow-md transition-shadow relative">
-              <div className="aspect-square bg-gray-100 relative">
-                <img src={photo.image_url} className="w-full h-full object-cover" alt="" loading="lazy" />
-                
-                {/* Overlay actions */}
-                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
-                  <button 
-                    onClick={() => openEditModal(photo)}
-                    className="bg-white p-2 rounded-full text-blue-600 hover:scale-110 transition-transform"
-                    title="Chỉnh sửa thông tin"
-                  >
-                    <Edit2 className="w-4 h-4" />
-                  </button>
-                  <button 
-                    onClick={() => handleDelete(photo.id, photo.image_url)}
-                    className="bg-white p-2 rounded-full text-red-600 hover:scale-110 transition-transform"
-                    title="Xóa ảnh"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+          {photos.map((photo) => {
+            const isVideo = photo.media_type === 'video' || isVideoUrl(photo.image_url);
+            return (
+              <div key={photo.id} className="bg-white rounded-lg border border-gray-200 overflow-hidden group shadow-sm hover:shadow-md transition-shadow relative">
+                <div className="aspect-square bg-gray-100 relative">
+                  {isVideo ? (
+                    <>
+                      <video
+                        src={photo.image_url}
+                        className="w-full h-full object-cover"
+                        muted
+                        preload="metadata"
+                        onMouseEnter={e => (e.currentTarget as HTMLVideoElement).play()}
+                        onMouseLeave={e => {
+                          const v = e.currentTarget as HTMLVideoElement;
+                          v.pause();
+                          v.currentTime = 0;
+                        }}
+                      />
+                      {/* Badge Video */}
+                      <div className="absolute top-2 left-2 bg-black/70 text-white text-[10px] px-1.5 py-0.5 rounded flex items-center gap-1">
+                        <Film className="w-3 h-3" /> Video
+                      </div>
+                    </>
+                  ) : (
+                    <img src={photo.image_url} className="w-full h-full object-cover" alt="" loading="lazy" />
+                  )}
+                  
+                  {/* Overlay actions */}
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                    <button 
+                      onClick={() => openEditModal(photo)}
+                      className="bg-white p-2 rounded-full text-blue-600 hover:scale-110 transition-transform"
+                      title="Chỉnh sửa thông tin"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                    <button 
+                      onClick={() => handleDelete(photo.id, photo.image_url)}
+                      className="bg-white p-2 rounded-full text-red-600 hover:scale-110 transition-transform"
+                      title="Xóa"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+                <div className="p-3">
+                  <p className="text-xs text-gray-500 font-medium mb-1">
+                    {photo.timeline_date ? format(parseISO(photo.timeline_date), 'dd/MM/yyyy') : 'Trống'}
+                  </p>
+                  <p className="text-sm text-gray-800 line-clamp-2" title={photo.caption || ''}>
+                    {photo.caption || <span className="text-gray-400 italic">Không có caption</span>}
+                  </p>
                 </div>
               </div>
-              <div className="p-3">
-                <p className="text-xs text-gray-500 font-medium mb-1">
-                  {photo.timeline_date ? format(parseISO(photo.timeline_date), 'dd/MM/yyyy') : 'Trống'}
-                </p>
-                <p className="text-sm text-gray-800 line-clamp-2" title={photo.caption || ''}>
-                  {photo.caption || <span className="text-gray-400 italic">Không có caption</span>}
-                </p>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
         
         {/* Load more button */}
@@ -307,7 +361,7 @@ export default function AdminGalleryManager() {
             onClick={() => fetchPhotos()}
             className="px-6 py-2 border border-gray-300 rounded-full text-gray-600 hover:bg-gray-50 transition-colors font-medium text-sm"
           >
-            Tải thêm ảnh cũ hơn
+            Tải thêm ảnh / video cũ hơn
           </button>
         </div>
       </div>
@@ -317,7 +371,7 @@ export default function AdminGalleryManager() {
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden">
             <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-              <h3 className="font-bold text-gray-800">Chỉnh sửa thông tin ảnh</h3>
+              <h3 className="font-bold text-gray-800">Chỉnh sửa thông tin</h3>
               <button onClick={() => setEditingPhoto(null)} className="text-gray-400 hover:text-gray-600">
                 <X className="w-5 h-5" />
               </button>
@@ -325,7 +379,11 @@ export default function AdminGalleryManager() {
             
             <div className="p-6 space-y-4">
               <div className="flex justify-center mb-4">
-                <img src={editingPhoto.image_url} className="h-32 object-contain rounded border border-gray-200" alt="" />
+                {editingPhoto.media_type === 'video' || isVideoUrl(editingPhoto.image_url) ? (
+                  <video src={editingPhoto.image_url} className="h-32 object-contain rounded border border-gray-200" controls muted />
+                ) : (
+                  <img src={editingPhoto.image_url} className="h-32 object-contain rounded border border-gray-200" alt="" />
+                )}
               </div>
 
               <div>
@@ -342,7 +400,7 @@ export default function AdminGalleryManager() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Caption / Ghi chú</label>
                 <textarea 
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-[#bca374] min-h-[100px] resize-y"
-                  placeholder="Nhập ghi chú cho ảnh..."
+                  placeholder="Nhập ghi chú..."
                   value={editCaption}
                   onChange={e => setEditCaption(e.target.value)}
                 />
