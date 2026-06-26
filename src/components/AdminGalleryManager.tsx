@@ -7,35 +7,42 @@ import EXIF from 'exif-js';
 import imageCompression from 'browser-image-compression';
 
 const extractDateFromImage = (file: File): Promise<string> => {
-  return new Promise((resolve) => {
+  const fallbackDate = file.lastModified
+    ? new Date(file.lastModified).toISOString().split('T')[0]
+    : new Date().toISOString().split('T')[0];
+
+  // Timeout 5 giây — EXIF.getData() đôi khi không gọi callback với ảnh cũ/lạ format
+  const timeoutFallback = new Promise<string>((resolve) =>
+    setTimeout(() => {
+      console.warn('EXIF timeout - dùng ngày file:', file.name);
+      resolve(fallbackDate);
+    }, 5000)
+  );
+
+  const exifRead = new Promise<string>((resolve) => {
     try {
       EXIF.getData(file as any, function(this: any) {
-        const dateTimeOriginal = EXIF.getTag(this, "DateTimeOriginal");
-        if (dateTimeOriginal) {
-          const parts = dateTimeOriginal.split(' ')[0].split(':');
-          if (parts.length === 3) {
-            resolve(`${parts[0]}-${parts[1]}-${parts[2]}`);
-            return;
+        try {
+          const dateTimeOriginal = EXIF.getTag(this, "DateTimeOriginal");
+          if (dateTimeOriginal && typeof dateTimeOriginal === 'string') {
+            const parts = dateTimeOriginal.split(' ')[0].split(':');
+            if (parts.length === 3 && parts[0].length === 4) {
+              resolve(`${parts[0]}-${parts[1]}-${parts[2]}`);
+              return;
+            }
           }
-        }
-        if (file.lastModified) {
-           const d = new Date(file.lastModified);
-           resolve(d.toISOString().split('T')[0]);
-           return;
-        }
-        resolve(new Date().toISOString().split('T')[0]);
+        } catch { /* ignore EXIF parse error */ }
+        resolve(fallbackDate);
       });
     } catch (e) {
-      console.error("EXIF parsing error", e);
-      if (file.lastModified) {
-        const d = new Date(file.lastModified);
-        resolve(d.toISOString().split('T')[0]);
-      } else {
-        resolve(new Date().toISOString().split('T')[0]);
-      }
+      console.error("EXIF getData error", e);
+      resolve(fallbackDate);
     }
   });
+
+  return Promise.race([exifRead, timeoutFallback]);
 };
+
 
 const isVideoFile = (file: File) => file.type.startsWith('video/');
 const isVideoUrl = (url: string) => {
