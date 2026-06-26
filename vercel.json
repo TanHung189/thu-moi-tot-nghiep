@@ -1,4 +1,7 @@
 {
+  "rewrites": [
+    { "source": "/((?!music.mp3|favicon.svg|icons.svg|cap.svg).*)", "destination": "/index.html" }
+  ],
   "headers": [
     {
       "source": "/(.*)",
@@ -6,10 +9,6 @@
         {
           "key": "Permissions-Policy",
           "value": "autoplay=*, camera=(), microphone=(), geolocation=()"
-        },
-        {
-          "key": "Cross-Origin-Opener-Policy",
-          "value": "same-origin-allow-popups"
         }
       ]
     },
@@ -23,6 +22,10 @@
         {
           "key": "Accept-Ranges",
           "value": "bytes"
+        },
+        {
+          "key": "Content-Type",
+          "value": "audio/mpeg"
         }
       ]
     }
