@@ -1,8 +1,8 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { useGallery, type GalleryPhoto } from '../hooks/useGallery';
 import { format, parseISO } from 'date-fns';
-import { Upload, Trash2, X, CheckCircle, Edit2, Film, ImageIcon } from 'lucide-react';
+import { Upload, Trash2, X, CheckCircle, Edit2, Film, ImageIcon, CheckSquare, Square, MousePointer2, ArrowLeft } from 'lucide-react';
 import EXIF from 'exif-js';
 import imageCompression from 'browser-image-compression';
 
@@ -58,6 +58,11 @@ export default function AdminGalleryManager() {
   const [editCaption, setEditCaption] = useState('');
   const [editDate, setEditDate] = useState('');
 
+  // ── Multi-select states ──────────────────────────────────────
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+
   const ADMIN_PASS = import.meta.env.VITE_ADMIN_PASSWORD || '123456';
 
   const handleLogin = (e: React.FormEvent) => {
@@ -67,6 +72,66 @@ export default function AdminGalleryManager() {
       setLoginError('');
     } else {
       setLoginError('Mật khẩu không đúng!');
+    }
+  };
+
+  // ── Toggle select mode ───────────────────────────────────────
+  const toggleSelectMode = () => {
+    setSelectMode(prev => !prev);
+    setSelectedIds(new Set());
+  };
+
+  // ── Toggle single item ───────────────────────────────────────
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  // ── Select / deselect all ────────────────────────────────────
+  const selectAll = () => setSelectedIds(new Set(photos.map(p => p.id)));
+  const deselectAll = () => setSelectedIds(new Set());
+  const isAllSelected = photos.length > 0 && selectedIds.size === photos.length;
+
+  // ── Bulk delete ──────────────────────────────────────────────
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+    const confirmed = window.confirm(
+      `Bạn có chắc muốn xóa ${selectedIds.size} file đã chọn không? Hành động này không thể hoàn tác!`
+    );
+    if (!confirmed) return;
+
+    setIsBulkDeleting(true);
+    const toDelete = photos.filter(p => selectedIds.has(p.id));
+
+    try {
+      // Remove from storage
+      const fileNames = toDelete
+        .map(p => p.image_url.split('/').pop()?.split('?')[0])
+        .filter(Boolean) as string[];
+      if (fileNames.length > 0) {
+        await supabase.storage.from('gallery').remove(fileNames);
+      }
+
+      // Remove from DB
+      const ids = toDelete.map(p => p.id);
+      const { error } = await supabase
+        .from('gallery_photos')
+        .delete()
+        .in('id', ids);
+      if (error) throw error;
+
+      setPhotos(prev => prev.filter(p => !selectedIds.has(p.id)));
+      setSelectedIds(new Set());
+      setSelectMode(false);
+    } catch (err) {
+      console.error('Lỗi khi xóa hàng loạt', err);
+      alert('Có lỗi khi xóa. Vui lòng thử lại.');
+    } finally {
+      setIsBulkDeleting(false);
     }
   };
 
@@ -91,40 +156,46 @@ export default function AdminGalleryManager() {
         let photoDate = new Date().toISOString().split('T')[0];
 
         if (isVideo) {
-          // Lấy ngày từ lastModified cho video
           if (file.lastModified) {
             photoDate = new Date(file.lastModified).toISOString().split('T')[0];
           }
-          // Không nén video
           fileToUpload = file;
         } else {
-          // Lấy EXIF date từ ảnh
           photoDate = await extractDateFromImage(file);
-          // Nén ảnh
-          const options = {
-            maxSizeMB: 0.4,
-            maxWidthOrHeight: 1920,
-            useWebWorker: true,
-          };
-          fileToUpload = await imageCompression(file, options);
+
+          try {
+            const compressionPromise = imageCompression(file, {
+              maxSizeMB: 0.4,
+              maxWidthOrHeight: 1920,
+              useWebWorker: true,
+            });
+            const timeoutPromise = new Promise<never>((_, reject) =>
+              setTimeout(() => reject(new Error('compression_timeout')), 30000)
+            );
+            fileToUpload = await Promise.race([compressionPromise, timeoutPromise]);
+          } catch (compressErr: any) {
+            console.warn('Nén ảnh thất bại, dùng file gốc:', file.name, compressErr?.message);
+            fileToUpload = file;
+          }
         }
 
-        // Upload to Storage
-        const fileExt = file.name.split('.').pop() || (isVideo ? 'mp4' : 'jpg');
-        const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const rawExt = file.name.split('.').pop() || '';
+        const fileExt = rawExt.toLowerCase().replace(/[^a-z0-9]/g, '') || (isVideo ? 'mp4' : 'jpg');
+        const safeFileName = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
 
         const { error: uploadError } = await supabase.storage
           .from('gallery')
-          .upload(fileName, fileToUpload);
+          .upload(safeFileName, fileToUpload, {
+            contentType: file.type || (isVideo ? 'video/mp4' : 'image/jpeg'),
+            upsert: false,
+          });
 
         if (uploadError) throw uploadError;
 
-        // Get Public URL
         const { data: { publicUrl } } = supabase.storage
           .from('gallery')
-          .getPublicUrl(fileName);
+          .getPublicUrl(safeFileName);
 
-        // Save to Database (kèm media_type)
         const { data: dbData, error: dbError } = await supabase
           .from('gallery_photos')
           .insert([{ 
@@ -238,22 +309,48 @@ export default function AdminGalleryManager() {
       {/* Header Admin */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-40 shadow-sm">
         <div className="max-w-6xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <div>
-            <h1 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-              <CheckCircle className="text-green-500 w-5 h-5" />
-              Quản Lý Bộ Sưu Tập Kỷ Niệm
-            </h1>
-            <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-3">
-              <span className="flex items-center gap-1"><ImageIcon className="w-3 h-3" />{imageCount} ảnh</span>
-              <span className="flex items-center gap-1"><Film className="w-3 h-3" />{videoCount} video</span>
-            </p>
+          <div className="flex items-center gap-3">
+            {/* Nút quay lại trang chủ */}
+            <button
+              onClick={() => { window.location.hash = ''; }}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-100 border border-gray-200 transition-colors text-sm font-medium"
+              title="Quay lại trang thư mời"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Quay lại
+            </button>
+
+            <div>
+              <h1 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                <CheckCircle className="text-green-500 w-5 h-5" />
+                Quản Lý Bộ Sưu Tập Kỷ Niệm
+              </h1>
+              <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-3">
+                <span className="flex items-center gap-1"><ImageIcon className="w-3 h-3" />{imageCount} ảnh</span>
+                <span className="flex items-center gap-1"><Film className="w-3 h-3" />{videoCount} video</span>
+              </p>
+            </div>
           </div>
           
           <div className="flex items-center gap-3">
+            {/* Nút bật/tắt chế độ chọn nhiều */}
+            <button
+              onClick={toggleSelectMode}
+              className={`px-4 py-2.5 rounded-lg flex items-center gap-2 font-medium transition-all border ${
+                selectMode
+                  ? 'bg-blue-600 text-white border-blue-600 shadow-md'
+                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+              }`}
+              title={selectMode ? 'Tắt chế độ chọn nhiều' : 'Bật chế độ chọn nhiều'}
+            >
+              <MousePointer2 className="w-4 h-4" />
+              {selectMode ? 'Đang chọn' : 'Chọn nhiều'}
+            </button>
+
             <button 
               onClick={() => fileInputRef.current?.click()}
-              disabled={isUploading}
-              className="bg-[#1a1a1a] hover:bg-gray-800 text-white px-5 py-2.5 rounded-lg flex items-center gap-2 font-medium transition-colors disabled:opacity-70"
+              disabled={isUploading || selectMode}
+              className="bg-[#1a1a1a] hover:bg-gray-800 text-white px-5 py-2.5 rounded-lg flex items-center gap-2 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Upload className="w-4 h-4" />
               Upload Ảnh / Video
@@ -269,6 +366,57 @@ export default function AdminGalleryManager() {
           </div>
         </div>
       </header>
+
+      {/* ── Multi-select Toolbar ──────────────────────────────── */}
+      {selectMode && (
+        <div className="sticky top-[73px] z-30 bg-blue-600 text-white shadow-lg">
+          <div className="max-w-6xl mx-auto px-4 py-3 flex flex-wrap items-center gap-3">
+            {/* Checkbox chọn tất cả */}
+            <button
+              onClick={isAllSelected ? deselectAll : selectAll}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/15 hover:bg-white/25 transition-colors text-sm font-medium"
+            >
+              {isAllSelected
+                ? <CheckSquare className="w-4 h-4" />
+                : <Square className="w-4 h-4" />
+              }
+              {isAllSelected ? 'Bỏ chọn tất cả' : 'Chọn tất cả'}
+            </button>
+
+            {/* Đếm đã chọn */}
+            <span className="text-sm font-semibold bg-white/20 px-3 py-1.5 rounded-lg">
+              {selectedIds.size > 0
+                ? `Đã chọn ${selectedIds.size} file`
+                : 'Chưa chọn file nào'}
+            </span>
+
+            {/* Spacer */}
+            <div className="flex-1" />
+
+            {/* Nút xóa hàng loạt */}
+            <button
+              onClick={handleBulkDelete}
+              disabled={selectedIds.size === 0 || isBulkDeleting}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-500 hover:bg-red-400 disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm transition-colors"
+            >
+              {isBulkDeleting
+                ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                : <Trash2 className="w-4 h-4" />
+              }
+              {isBulkDeleting ? 'Đang xóa...' : `Xóa ${selectedIds.size > 0 ? `(${selectedIds.size})` : ''}`}
+            </button>
+
+            {/* Đóng chế độ chọn */}
+            <button
+              onClick={toggleSelectMode}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white/15 hover:bg-white/25 transition-colors text-sm"
+            >
+              <X className="w-4 h-4" />
+              Hủy
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Upload Progress */}
       {isUploading && uploadProgress && (
@@ -298,8 +446,19 @@ export default function AdminGalleryManager() {
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
           {photos.map((photo) => {
             const isVideo = photo.media_type === 'video' || isVideoUrl(photo.image_url);
+            const isSelected = selectedIds.has(photo.id);
+
             return (
-              <div key={photo.id} className="bg-white rounded-lg border border-gray-200 overflow-hidden group shadow-sm hover:shadow-md transition-shadow relative">
+              <div
+                key={photo.id}
+                onClick={() => selectMode && toggleSelect(photo.id)}
+                className={`bg-white rounded-lg border overflow-hidden group shadow-sm hover:shadow-md transition-all relative
+                  ${selectMode ? 'cursor-pointer' : ''}
+                  ${isSelected
+                    ? 'border-blue-500 ring-2 ring-blue-400 shadow-blue-100'
+                    : 'border-gray-200'}
+                `}
+              >
                 <div className="aspect-square bg-gray-100 relative">
                   {isVideo ? (
                     <>
@@ -308,7 +467,7 @@ export default function AdminGalleryManager() {
                         className="w-full h-full object-cover"
                         muted
                         preload="metadata"
-                        onMouseEnter={e => (e.currentTarget as HTMLVideoElement).play()}
+                        onMouseEnter={e => !selectMode && (e.currentTarget as HTMLVideoElement).play()}
                         onMouseLeave={e => {
                           const v = e.currentTarget as HTMLVideoElement;
                           v.pause();
@@ -323,24 +482,43 @@ export default function AdminGalleryManager() {
                   ) : (
                     <img src={photo.image_url} className="w-full h-full object-cover" alt="" loading="lazy" />
                   )}
-                  
-                  {/* Overlay actions */}
-                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
-                    <button 
-                      onClick={() => openEditModal(photo)}
-                      className="bg-white p-2 rounded-full text-blue-600 hover:scale-110 transition-transform"
-                      title="Chỉnh sửa thông tin"
-                    >
-                      <Edit2 className="w-4 h-4" />
-                    </button>
-                    <button 
-                      onClick={() => handleDelete(photo.id, photo.image_url)}
-                      className="bg-white p-2 rounded-full text-red-600 hover:scale-110 transition-transform"
-                      title="Xóa"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
+
+                  {/* ── Checkbox overlay (select mode) ── */}
+                  {selectMode && (
+                    <div className={`absolute inset-0 transition-all ${isSelected ? 'bg-blue-500/20' : 'bg-transparent group-hover:bg-black/10'}`}>
+                      <div className={`absolute top-2 right-2 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all
+                        ${isSelected
+                          ? 'bg-blue-500 border-blue-500'
+                          : 'bg-white/80 border-gray-400 group-hover:border-blue-400'}`}
+                      >
+                        {isSelected && (
+                          <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Overlay actions (normal mode) */}
+                  {!selectMode && (
+                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                      <button 
+                        onClick={() => openEditModal(photo)}
+                        className="bg-white p-2 rounded-full text-blue-600 hover:scale-110 transition-transform"
+                        title="Chỉnh sửa thông tin"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button 
+                        onClick={() => handleDelete(photo.id, photo.image_url)}
+                        className="bg-white p-2 rounded-full text-red-600 hover:scale-110 transition-transform"
+                        title="Xóa"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
                 </div>
                 <div className="p-3">
                   <p className="text-xs text-gray-500 font-medium mb-1">

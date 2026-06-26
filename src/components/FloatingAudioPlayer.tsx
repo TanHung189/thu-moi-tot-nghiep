@@ -1,22 +1,26 @@
 // Component AudioPlayer - Nút nhạc nền nổi, có thể kéo thả
+// Nhạc tự bật khi người dùng tương tác đầu tiên (scroll, click, touch, phím...)
 import { useState, useRef, useEffect } from "react";
 import { motion, useMotionValue } from "framer-motion";
 import { Volume2, VolumeX } from "lucide-react";
 
 const MUSIC_URL = "/music.mp3";
+const STORAGE_KEY = "audio_player_pos";
+
+// Các sự kiện tính là "tương tác đầu tiên"
+const INTERACTION_EVENTS = ["scroll", "click", "touchstart", "keydown", "mousemove", "pointerdown"] as const;
 
 export default function FloatingAudioPlayer() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [hasError, setHasError] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
-  const userToggledRef = useRef(false);
   const isDraggingRef = useRef(false);
+  const userPausedRef = useRef(false);
+  const startedRef = useRef(false); // Đảm bảo chỉ bật nhạc 1 lần
 
-  // Vị trí kéo thả - reset về 0,0 khi reload trang
   const x = useMotionValue(0);
   const y = useMotionValue(0);
 
-  // --- Audio Logic ---
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -25,49 +29,71 @@ export default function FloatingAudioPlayer() {
     audio.volume = 0.4;
     let isMounted = true;
 
-    const handleError = () => { setHasError(true); setIsPlaying(false); };
-    audio.addEventListener("error", handleError);
+    audio.addEventListener("error", () => {
+      if (isMounted) { setHasError(true); setIsPlaying(false); }
+    });
 
-    const removeListeners = () => {
-      document.removeEventListener("click", handleInteraction);
-      document.removeEventListener("touchstart", handleInteraction);
-      document.removeEventListener("scroll", handleInteraction);
+    // Hàm xóa tất cả listener sau khi đã dùng
+    const removeAll = () => {
+      INTERACTION_EVENTS.forEach(evt =>
+        document.removeEventListener(evt, onFirstInteraction)
+      );
     };
 
-    const handleInteraction = async () => {
-      if (!isMounted || userToggledRef.current) { removeListeners(); return; }
-      try { await audio.play(); setIsPlaying(true); }
-      catch { /* ignore */ }
-      finally { removeListeners(); }
+    // Khi người dùng tương tác lần đầu → bật nhạc
+    const onFirstInteraction = async () => {
+      if (startedRef.current || userPausedRef.current) return;
+      startedRef.current = true;
+      removeAll();
+      try {
+        audio.muted = false;
+        await audio.play();
+        if (isMounted) setIsPlaying(true);
+      } catch (err) {
+        console.warn("Không thể phát nhạc:", err);
+      }
     };
 
+    // Thử autoplay ngay (sẽ thành công nếu browser cho phép)
     const tryAutoplay = async () => {
-      try { await audio.play(); if (isMounted) setIsPlaying(true); }
-      catch {
-        document.addEventListener("click", handleInteraction, { once: true });
-        document.addEventListener("touchstart", handleInteraction, { once: true });
-        document.addEventListener("scroll", handleInteraction, { once: true });
+      try {
+        audio.muted = false;
+        await audio.play();
+        startedRef.current = true;
+        if (isMounted) setIsPlaying(true);
+      } catch {
+        // Browser block → đăng ký chờ tương tác đầu tiên
+        INTERACTION_EVENTS.forEach(evt =>
+          document.addEventListener(evt, onFirstInteraction, { once: false, passive: true })
+        );
       }
     };
 
     tryAutoplay();
+
     return () => {
       isMounted = false;
-      audio.removeEventListener("error", handleError);
+      removeAll();
       audio.pause();
-      removeListeners();
     };
   }, []);
 
   const togglePlay = async () => {
-    // Không bật/tắt nhạc nếu vừa kéo xong
     if (isDraggingRef.current) return;
-    userToggledRef.current = true;
     const audio = audioRef.current;
     if (!audio || hasError) return;
     try {
-      if (isPlaying) { audio.pause(); setIsPlaying(false); }
-      else { await audio.play(); setIsPlaying(true); }
+      if (isPlaying) {
+        audio.pause();
+        setIsPlaying(false);
+        userPausedRef.current = true; // User chủ động dừng
+      } else {
+        audio.muted = false;
+        await audio.play();
+        setIsPlaying(true);
+        userPausedRef.current = false;
+        startedRef.current = true;
+      }
     } catch { setHasError(true); }
   };
 
@@ -80,11 +106,9 @@ export default function FloatingAudioPlayer() {
       className="floating-btn touch-none"
       onDragStart={() => { isDraggingRef.current = true; }}
       onDragEnd={() => {
-        // Lưu vị trí mới sau khi thả
         try {
           localStorage.setItem(STORAGE_KEY, JSON.stringify({ x: x.get(), y: y.get() }));
         } catch {}
-        // Delay nhỏ để tránh click ngay sau drag
         setTimeout(() => { isDraggingRef.current = false; }, 100);
       }}
       whileDrag={{ scale: 1.12, cursor: "grabbing" }}
@@ -94,7 +118,7 @@ export default function FloatingAudioPlayer() {
       <motion.button
         onClick={togglePlay}
         id="audio-player-toggle-btn"
-        className="w-11 h-11 flex items-center justify-center bg-white/90 backdrop-blur-sm border-2 border-[#bca374] shadow-lg text-[#bca374] hover:bg-[#bca374] hover:text-white transition-colors rounded-full select-none cursor-grab"
+        className="w-11 h-11 flex items-center justify-center bg-white/90 backdrop-blur-sm border-2 border-[#bca374] shadow-lg text-[#bca374] hover:bg-[#bca374] hover:text-white transition-colors rounded-full select-none cursor-grab relative z-10"
         whileHover={{ scale: 1.08 }}
         whileTap={{ scale: 0.92 }}
         aria-label={isPlaying ? "Tạm dừng nhạc" : "Phát nhạc"}
