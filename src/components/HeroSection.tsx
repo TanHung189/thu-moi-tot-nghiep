@@ -7,10 +7,10 @@ export default function HeroSection() {
   return (
     <section
       id="hero"
-      className="relative min-h-screen flex flex-col items-center justify-center text-center px-4 py-20 overflow-hidden"
+      className="relative min-h-screen flex flex-col items-center justify-center text-center px-4 py-20 overflow-hidden bg-[#030914]"
     >
-      {/* Lớp nền trong suốt để dùng nền giấy từ body */}
-      <div className="absolute inset-0 z-0 bg-transparent" />
+      {/* Lớp nền tối sang trọng thay cho nền giấy */}
+      <div className="absolute inset-0 z-0 bg-[radial-gradient(circle_at_center,#bca374_0%,transparent_80%)] opacity-10 pointer-events-none" />
 
       {/* Vòng cung/họa tiết trang trí (giả lập bằng border mảnh) */}
       <div className="absolute inset-4 sm:inset-8 border-[1px] border-[#bca374] opacity-30 pointer-events-none z-0" />
@@ -35,7 +35,7 @@ export default function HeroSection() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.4 }}
-          className="text-[#666666] font-serif italic text-base md:text-lg mb-6 tracking-widest uppercase"
+          className="text-[#bca374]/80 font-serif italic text-base md:text-lg mb-6 tracking-widest uppercase"
         >
           Trân trọng kính mời bạn đến tham dự buổi lễ tốt nghiệp của
         </motion.p>
@@ -73,7 +73,7 @@ export default function HeroSection() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 1.2 }}
-          className="hero-subtitle font-sans text-slate-700 mb-8 tracking-wide"
+          className="hero-subtitle font-serif text-white text-xl md:text-2xl mb-8 tracking-[0.2em] uppercase"
         >
           Lễ Tốt Nghiệp Đại Học
         </motion.h2>
@@ -83,30 +83,30 @@ export default function HeroSection() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 1.4 }}
-          className="flex flex-col sm:flex-row items-center justify-center gap-8 sm:gap-16 mb-12 border-y border-[#d1d5db] py-6"
+          className="flex flex-col sm:flex-row items-center justify-center gap-8 sm:gap-16 mb-12 border-y border-[#bca374]/30 py-8"
         >
           {/* Thời gian */}
           <div className="text-center px-4">
-            <p className="text-[#666666] text-xs font-medium tracking-widest uppercase mb-2">
+            <p className="text-[#bca374]/70 text-xs font-medium tracking-[0.2em] uppercase mb-2">
               Thời Gian
             </p>
-            <p className="text-[#1a1a1a] font-serif text-xl font-bold">
+            <p className="text-white font-serif text-xl font-bold tracking-wider drop-shadow-sm">
               {EVENT_INFO.startTime} – {EVENT_INFO.endTime}
             </p>
-            <p className="text-[#666666] text-sm mt-1">
+            <p className="text-white/60 text-sm mt-1 tracking-wider">
               {EVENT_INFO.dateDisplay}
             </p>
           </div>
 
           {/* Ngôi sao chia cách */}
-          <div className="w-px h-12 bg-[#d1d5db] hidden sm:block" />
+          <div className="w-px h-16 bg-gradient-to-b from-transparent via-[#bca374]/50 to-transparent hidden sm:block" />
 
           {/* Địa điểm */}
-          <div className="text-center px-4 max-w-[200px]">
-            <p className="text-[#666666] text-xs font-medium tracking-widest uppercase mb-2">
+          <div className="text-center px-4 max-w-[250px]">
+            <p className="text-[#bca374]/70 text-xs font-medium tracking-[0.2em] uppercase mb-2">
               Địa Điểm
             </p>
-            <p className="text-[#1a1a1a] font-serif font-bold text-sm leading-snug">
+            <p className="text-white font-serif font-bold text-sm leading-relaxed tracking-wide drop-shadow-sm">
               {EVENT_INFO.venue}
             </p>
           </div>
