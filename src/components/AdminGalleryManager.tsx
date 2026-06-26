@@ -135,21 +135,31 @@ export default function AdminGalleryManager() {
     }
   };
 
+  const [failedFiles, setFailedFiles] = useState<string[]>([]);
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
-    
+
     const files = Array.from(e.target.files);
     setIsUploading(true);
+    setFailedFiles([]);
     setUploadProgress({ total: files.length, current: 0 });
 
     const newPhotos: GalleryPhoto[] = [];
-    let successCount = 0;
+    const failedNames: string[] = [];
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       const isVideo = isVideoFile(file);
 
       setUploadProgress({ total: files.length, current: i, fileName: file.name });
+
+      // Kiểm tra kích thước tối đa (50MB — giới hạn Supabase free tier)
+      if (file.size > 50 * 1024 * 1024) {
+        console.warn(`File quá lớn (> 50MB): ${file.name}`);
+        failedNames.push(file.name + ' (quá lớn > 50MB)');
+        continue;
+      }
 
       try {
         let fileToUpload: File | Blob = file;
@@ -163,19 +173,26 @@ export default function AdminGalleryManager() {
         } else {
           photoDate = await extractDateFromImage(file);
 
-          try {
-            const compressionPromise = imageCompression(file, {
-              maxSizeMB: 0.4,
-              maxWidthOrHeight: 1920,
-              useWebWorker: true,
-            });
-            const timeoutPromise = new Promise<never>((_, reject) =>
-              setTimeout(() => reject(new Error('compression_timeout')), 30000)
-            );
-            fileToUpload = await Promise.race([compressionPromise, timeoutPromise]);
-          } catch (compressErr: any) {
-            console.warn('Nén ảnh thất bại, dùng file gốc:', file.name, compressErr?.message);
-            fileToUpload = file;
+          // Chỉ nén nếu file > 1.5MB, tránh nén ảnh nhỏ gây lỗi
+          if (file.size > 1.5 * 1024 * 1024) {
+            try {
+              const compressionPromise = imageCompression(file, {
+                maxSizeMB: 1.2,          // Tăng lên 1.2MB — ít agressive hơn, ít timeout hơn
+                maxWidthOrHeight: 2048,   // Tăng lên 2048 để giữ chất lượng
+                useWebWorker: true,
+                fileType: 'image/jpeg',
+                initialQuality: 0.85,
+              });
+              // Timeout 60s thay vì 30s
+              const timeoutPromise = new Promise<never>((_, reject) =>
+                setTimeout(() => reject(new Error('compression_timeout')), 60000)
+              );
+              fileToUpload = await Promise.race([compressionPromise, timeoutPromise]);
+            } catch (compressErr: any) {
+              // Nếu nén thất bại → dùng file gốc, không bỏ qua
+              console.warn(`Nén ảnh thất bại (${compressErr?.message}), dùng file gốc:`, file.name);
+              fileToUpload = file;
+            }
           }
         }
 
@@ -190,7 +207,11 @@ export default function AdminGalleryManager() {
             upsert: false,
           });
 
-        if (uploadError) throw uploadError;
+        if (uploadError) {
+          console.error(`Upload lỗi (${file.name}):`, uploadError.message);
+          failedNames.push(`${file.name} (${uploadError.message})`);
+          continue; // Bỏ qua file này, tiếp tục file kế
+        }
 
         const { data: { publicUrl } } = supabase.storage
           .from('gallery')
@@ -198,36 +219,49 @@ export default function AdminGalleryManager() {
 
         const { data: dbData, error: dbError } = await supabase
           .from('gallery_photos')
-          .insert([{ 
-            image_url: publicUrl, 
-            caption: '', 
+          .insert([{
+            image_url: publicUrl,
+            caption: '',
             timeline_date: photoDate,
             media_type: isVideo ? 'video' : 'image',
           }])
           .select()
           .single();
 
-        if (dbError) throw dbError;
-        
-        if (dbData) {
-          newPhotos.push(dbData as GalleryPhoto);
-          successCount++;
+        if (dbError) {
+          console.error(`DB lỗi (${file.name}):`, dbError.message);
+          failedNames.push(`${file.name} (lỗi DB: ${dbError.message})`);
+          continue;
         }
 
-      } catch (err) {
-        console.error('Lỗi khi upload file', file.name, err);
+        if (dbData) {
+          newPhotos.push(dbData as GalleryPhoto);
+        }
+
+      } catch (err: any) {
+        console.error('Lỗi không xác định khi upload', file.name, err);
+        failedNames.push(`${file.name} (lỗi không xác định)`);
       }
     }
 
     setIsUploading(false);
     setUploadProgress(null);
+    setFailedFiles(failedNames);
     if (fileInputRef.current) fileInputRef.current.value = '';
-    
+
     if (newPhotos.length > 0) {
       setPhotos(prev => [...newPhotos, ...prev]);
     }
-    alert(`Đã upload thành công ${successCount}/${files.length} file!`);
+
+    // Thông báo chi tiết
+    if (failedNames.length === 0) {
+      alert(`✅ Đã upload thành công ${newPhotos.length}/${files.length} file!`);
+    } else {
+      const failMsg = failedNames.slice(0, 5).join('\n');
+      alert(`⚠️ Upload xong:\n✅ Thành công: ${newPhotos.length} file\n❌ Thất bại: ${failedNames.length} file\n\n${failMsg}${failedNames.length > 5 ? `\n...và ${failedNames.length - 5} file khác` : ''}`);
+    }
   };
+
 
   const handleDelete = async (id: string, imageUrl: string) => {
     if (!window.confirm('Bạn có chắc chắn muốn xóa file này không?')) return;
@@ -431,7 +465,7 @@ export default function AdminGalleryManager() {
                 <p className="text-xs mt-0.5 text-blue-600 truncate">{uploadProgress.fileName}</p>
               )}
               <div className="mt-2 h-1.5 bg-blue-100 rounded-full overflow-hidden">
-                <div 
+                <div
                   className="h-full bg-blue-500 rounded-full transition-all duration-300"
                   style={{ width: `${((uploadProgress.current) / uploadProgress.total) * 100}%` }}
                 />
@@ -440,6 +474,34 @@ export default function AdminGalleryManager() {
           </div>
         </div>
       )}
+
+      {/* Danh sách file thất bại */}
+      {failedFiles.length > 0 && (
+        <div className="max-w-6xl mx-auto px-4 mt-4">
+          <div className="bg-red-50 border border-red-200 text-red-800 p-4 rounded-lg">
+            <div className="flex items-center justify-between mb-2">
+              <p className="font-semibold text-sm flex items-center gap-2">
+                ⚠️ {failedFiles.length} file không upload được:
+              </p>
+              <button onClick={() => setFailedFiles([])} className="text-red-400 hover:text-red-600 text-xs underline">
+                Đóng
+              </button>
+            </div>
+            <ul className="text-xs space-y-1 max-h-32 overflow-y-auto">
+              {failedFiles.map((f, i) => (
+                <li key={i} className="flex items-start gap-1.5">
+                  <span className="text-red-400 shrink-0">✗</span>
+                  <span className="break-all">{f}</span>
+                </li>
+              ))}
+            </ul>
+            <p className="text-xs text-red-500 mt-2 border-t border-red-200 pt-2">
+              💡 Thử chia nhỏ file: video nên &lt; 50MB, ảnh nên &lt; 20MB.
+            </p>
+          </div>
+        </div>
+      )}
+
 
       {/* Grid danh sách ảnh và video */}
       <div className="max-w-6xl mx-auto px-4 mt-8">
