@@ -68,15 +68,30 @@ export default function HeroSection() {
           <div className="divider-line" />
         </motion.div>
 
-        {/* Tiêu đề sự kiện */}
-        <motion.h2
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 1.2 }}
-          className="hero-subtitle font-serif text-white text-xl md:text-2xl mb-8 tracking-[0.2em] uppercase"
-        >
-          Lễ Tốt Nghiệp Đại Học
-        </motion.h2>
+        {/* Tiêu đề sự kiện & Ngành học */}
+        <div className="mb-8">
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 1.2 }}
+            className="hero-subtitle font-serif text-white text-xl md:text-2xl tracking-[0.2em] uppercase mb-3"
+          >
+            Lễ Tốt Nghiệp Đại Học
+          </motion.h2>
+          
+          {EVENT_INFO.major && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 1.3 }}
+              className="inline-block px-4 py-1.5 bg-[#bca374]/10 border border-[#bca374]/30 rounded-full"
+            >
+              <p className="text-[#bca374] font-medium tracking-widest uppercase text-xs md:text-sm">
+                {EVENT_INFO.major}
+              </p>
+            </motion.div>
+          )}
+        </div>
 
         {/* Thông tin thời gian & địa điểm */}
         <motion.div
