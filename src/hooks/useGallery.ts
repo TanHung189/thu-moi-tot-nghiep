@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabaseClient';
 
 export interface GalleryPhoto {
@@ -28,9 +28,11 @@ export function useGallery(userIdentifier: string) {
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(0);
+  const isFetchingRef = useRef(false);
 
   const fetchPhotos = useCallback(async (isInitial = false) => {
-    if (loading || (!hasMore && !isInitial)) return;
+    if (isFetchingRef.current || (!hasMore && !isInitial)) return;
+    isFetchingRef.current = true;
     setLoading(true);
 
     try {
@@ -92,15 +94,21 @@ export function useGallery(userIdentifier: string) {
         };
       });
 
-      setPhotos(prev => isInitial ? processedPhotos : [...prev, ...processedPhotos]);
+      setPhotos(prev => {
+        if (isInitial) return processedPhotos;
+        const existingIds = new Set(prev.map(p => p.id));
+        const newPhotos = processedPhotos.filter(p => !existingIds.has(p.id));
+        return [...prev, ...newPhotos];
+      });
       setPage(currentPage + 1);
 
     } catch (error) {
       console.error('Error fetching photos:', error);
     } finally {
+      isFetchingRef.current = false;
       setLoading(false);
     }
-  }, [page, loading, hasMore, userIdentifier]);
+  }, [page, hasMore, userIdentifier]);
 
   // Initial fetch
   useEffect(() => {

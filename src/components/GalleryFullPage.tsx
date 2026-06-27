@@ -108,7 +108,7 @@ function Lightbox({
         className="fixed inset-0 z-[200] flex items-center justify-center bg-black/90 backdrop-blur-sm"
         aria-modal="true"
       >
-        <div className="flex flex-col lg:flex-row w-full max-w-6xl h-full max-h-[90vh] mx-4 bg-white rounded-xl overflow-hidden shadow-2xl relative">
+        <div className="flex flex-col lg:flex-row w-full max-w-6xl h-full max-h-[90dvh] mx-4 bg-white rounded-xl overflow-hidden shadow-2xl relative">
           <button
             onClick={onClose}
             className="absolute top-4 right-4 z-50 bg-[#f4f4f4]/80 backdrop-blur-md rounded-full p-2 text-[#1a1a1a] hover:bg-[#bca374] hover:text-white transition-colors"
