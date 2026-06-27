@@ -16,9 +16,9 @@ export const EVENT_INFO = {
   name: "BÙI ĐỖ TẤN HƯNG",
   // Ngày tốt nghiệp: 11/07/2026
   // ⚠️ THAY ĐỔI: Chỉnh lại năm cho đúng với năm tốt nghiệp của bạn
-  eventDate: new Date("2026-07-11T13:30:00+07:00"),
-  startTime: "13:30",
-  endTime: "17:00",
+  eventDate: new Date("2026-07-11T15:30:00+07:00"), // Đếm ngược đến giờ chụp ảnh chung vui
+  startTime: "15:30",
+  endTime: "17:30",
   dateDisplay: "Ngày 11 Tháng 7",
   venue: "Hội Trường 300A, \n Trường Đại học An Giang - ĐHQG TP.HCM",
   address: "18 Ung Văn Khiêm, Đông Xuyên, Thành phố Long Xuyên, An Giang",

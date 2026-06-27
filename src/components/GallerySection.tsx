@@ -443,14 +443,16 @@ export default function GallerySection() {
         {/* Nút Xem Tất Cả → chuyển sang trang gallery riêng */}
         {photos.length > 0 && (
           <div className="w-full py-8 flex justify-center mt-4">
-            <button
+            <motion.button
               onClick={() => { window.location.hash = '#gallery-all'; }}
-              className="px-8 py-3.5 bg-[#bca374] text-white rounded-full font-medium hover:bg-[#a08950] transition-all shadow-lg hover:shadow-xl flex items-center gap-2"
+              className="px-8 py-3.5 bg-[#bca374] text-white rounded-full font-medium hover:bg-[#a08950] transition-all shadow-lg hover:shadow-xl flex items-center gap-2 group"
+              animate={{ scale: [1, 1.05, 1] }}
+              transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
             >
-              <Images className="w-4 h-4" />
+              <Images className="w-4 h-4 animate-pulse" />
               Xem Tất Cả Kỷ Niệm
               <span className="bg-white/20 px-2 py-0.5 rounded-full text-xs">{photos.length}+</span>
-            </button>
+            </motion.button>
           </div>
         )}
       </div>

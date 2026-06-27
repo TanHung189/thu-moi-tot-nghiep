@@ -312,12 +312,14 @@ export default function RSVPForm({ onSubmit }: RSVPFormProps) {
                 </div>
 
                 {/* Nút gửi */}
-                <button
+                <motion.button
                   type="submit"
                   id="rsvp-submit-btn"
                   disabled={isSubmitting}
                   className="btn-gold flex items-center justify-center gap-2 w-full disabled:opacity-50 disabled:cursor-not-allowed"
                   aria-label="Gửi lời chúc"
+                  animate={isSubmitting ? {} : { scale: [1, 1.02, 1] }}
+                  transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
                 >
                   {isSubmitting ? (
                     <>
@@ -344,11 +346,11 @@ export default function RSVPForm({ onSubmit }: RSVPFormProps) {
                     </>
                   ) : (
                     <>
-                      <Send className="w-4 h-4" />
+                      <Send className="w-4 h-4 animate-pulse" />
                       <span>Gửi Lời Chúc</span>
                     </>
                   )}
-                </button>
+                </motion.button>
               </motion.form>
             )}
           </AnimatePresence>

@@ -90,11 +90,17 @@ export default function LocationSection() {
             {/* Thời gian */}
             <div className="flex flex-col items-center text-center">
               <Calendar className="w-8 h-8 text-[#bca374] mb-3" strokeWidth={1} />
-              <p className="text-[#666666] text-xs uppercase tracking-widest mb-2">Thời Gian</p>
-              <p className="text-[#1a1a1a] font-bold font-serif text-xl mb-1">
+              <p className="text-[#666666] text-xs uppercase tracking-widest mb-2">Thời Gian Chụp Ảnh Cùng Bạn Bè</p>
+              <p className="text-[#1a1a1a] font-bold font-serif text-xl mb-1 text-gold-600">
                 {EVENT_INFO.startTime} – {EVENT_INFO.endTime}
               </p>
-              <p className="text-[#666666] text-sm uppercase tracking-widest">{EVENT_INFO.dateDisplay}</p>
+              <p className="text-[#666666] text-sm uppercase tracking-widest mb-3">{EVENT_INFO.dateDisplay}</p>
+              
+              <div className="bg-gold-50/50 border border-gold-200/50 rounded-lg px-4 py-2.5 max-w-xs">
+                <p className="text-xs text-gold-700 italic">
+                  Lễ trao bằng trong hội trường diễn ra từ 13:00. Nhưng mình sẽ ra ngoài chụp ảnh chung vui cùng mọi người từ khoảng 15:30 nhé!
+                </p>
+              </div>
             </div>
 
             {/* Đường kẻ trang trí */}
@@ -103,17 +109,20 @@ export default function LocationSection() {
             {/* Nút hành động */}
             <div className="flex flex-col sm:flex-row gap-3">
               {/* Thêm vào Google Calendar */}
-              <a
+              <motion.a
                 href={getGoogleCalendarUrl()}
                 target="_blank"
                 rel="noopener noreferrer"
                 id="btn-add-google-calendar"
-                className="btn-gold flex items-center justify-center gap-2 text-sm flex-1"
+                className="btn-gold flex items-center justify-center gap-2 text-sm flex-1 relative overflow-hidden group"
                 aria-label="Thêm vào Google Calendar"
+                animate={{ scale: [1, 1.05, 1] }}
+                transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
               >
-                <Calendar className="w-4 h-4" />
+                <div className="absolute inset-0 bg-white/20 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out repeat-infinite animate-[shimmer_2s_infinite]" />
+                <Calendar className="w-4 h-4 animate-pulse" />
                 <span>Google Calendar</span>
-              </a>
+              </motion.a>
 
               {/* Thêm vào lịch (.ics) */}
               <button

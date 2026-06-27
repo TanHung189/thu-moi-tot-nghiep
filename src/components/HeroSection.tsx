@@ -134,14 +134,16 @@ export default function HeroSection() {
           transition={{ duration: 0.8, delay: 1.8 }}
           className="flex flex-col items-center gap-2"
         >
-          <a
+          <motion.a
             href="#countdown"
             className="btn-gold inline-flex items-center gap-2 text-sm font-semibold"
             aria-label="Xem đếm ngược thời gian"
+            animate={{ scale: [1, 1.05, 1] }}
+            transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
           >
             <span>Xem Chi Tiết</span>
             <span className="animate-bounce">↓</span>
-          </a>
+          </motion.a>
         </motion.div>
 
         {/* Decorative corner ornaments */}
