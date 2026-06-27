@@ -112,52 +112,54 @@ export default function App() {
     return <AdminGalleryManager />;
   }
 
-  if (isGalleryRoute) {
-    return <GalleryFullPage />;
-  }
-
   return (
-    <div className="relative min-h-screen bg-transparent overflow-x-hidden">
-      {/* Layer 1: Nội dung chính */}
-      <main className="relative z-10">
-        {/* Hero - Phần đầu trang */}
-        <HeroSection />
+    <>
+      {isGalleryRoute ? (
+        <GalleryFullPage />
+      ) : (
+        <div className="relative min-h-screen bg-transparent overflow-x-hidden">
+          {/* Layer 1: Nội dung chính */}
+          <main className="relative z-10">
+            {/* Hero - Phần đầu trang */}
+            <HeroSection />
 
-        <SectionDivider />
+            <SectionDivider />
 
-        {/* Countdown - Đồng hồ đếm ngược */}
-        <CountdownSection />
+            {/* Countdown - Đồng hồ đếm ngược */}
+            <CountdownSection />
 
-        <SectionDivider />
+            <SectionDivider />
 
-        {/* Location - Địa điểm và bản đồ */}
-        <LocationSection />
+            {/* Location - Địa điểm và bản đồ */}
+            <LocationSection />
 
-        <SectionDivider />
+            <SectionDivider />
 
-        {/* Gallery - Bộ sưu tập ảnh kỷ niệm */}
-        <GallerySection />
+            {/* Gallery - Bộ sưu tập ảnh kỷ niệm */}
+            <GallerySection />
 
-        <SectionDivider />
+            <SectionDivider />
 
-        {/* RSVP - Form xác nhận tham dự */}
-        <RSVPForm onSubmit={handleNewMessage} />
+            {/* RSVP - Form xác nhận tham dự */}
+            <RSVPForm onSubmit={handleNewMessage} />
 
-        <SectionDivider />
+            <SectionDivider />
 
-        {/* Guestbook - Sổ lưu bút với sticky notes */}
-        <Guestbook messages={messages} />
+            {/* Guestbook - Sổ lưu bút với sticky notes */}
+            <Guestbook messages={messages} />
 
-        {/* Footer */}
-        <Footer />
-      </main>
+            {/* Footer */}
+            <Footer />
+          </main>
+
+          {/* Nút QR Code */}
+          <QRCodeModal />
+        </div>
+      )}
 
       {/* Layer 3: Floating elements (không bị ảnh hưởng bởi scroll) */}
-      {/* Đĩa nhạc vinyl nổi */}
+      {/* Đĩa nhạc vinyl nổi được đặt bên ngoài để không bị ngắt nhạc khi chuyển trang */}
       <FloatingAudioPlayer />
-
-      {/* Nút QR Code */}
-      <QRCodeModal />
-    </div>
+    </>
   );
 }

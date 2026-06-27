@@ -78,7 +78,7 @@ export default function LocationSection() {
             <div className="flex flex-col items-center text-center">
               <MapPin className="w-8 h-8 text-[#bca374] mb-3" strokeWidth={1} />
               <p className="text-[#666666] text-xs uppercase tracking-widest mb-2">Địa Điểm</p>
-              <h3 className="text-[#1a1a1a] font-serif font-bold text-xl leading-snug mb-1">
+              <h3 className="text-[#1a1a1a] font-serif font-bold text-xl leading-snug mb-1 whitespace-pre-line">
                 {EVENT_INFO.venue}
               </h3>
               <p className="text-[#666666] text-sm">{EVENT_INFO.address}</p>
