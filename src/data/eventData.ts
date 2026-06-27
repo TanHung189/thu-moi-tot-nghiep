@@ -20,7 +20,7 @@ export const EVENT_INFO = {
   startTime: "13:30",
   endTime: "17:00",
   dateDisplay: "Ngày 11 Tháng 7",
-  venue: "Trường Đại học An Giang - ĐHQG TP.HCM",
+  venue: "Hội Trường 300A, Trường Đại học An Giang - ĐHQG TP.HCM",
   address: "18 Ung Văn Khiêm, Đông Xuyên, Thành phố Long Xuyên, An Giang",
   // ⚠️ THAY ĐỔI: URL trang web của bạn khi deploy (dùng cho QR Code)
   shareUrl: "https://thu-moi-tot-nghiep-pi.vercel.app/",

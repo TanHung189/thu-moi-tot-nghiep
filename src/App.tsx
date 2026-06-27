@@ -16,6 +16,7 @@ import FloatingAudioPlayer from './components/FloatingAudioPlayer';
 import QRCodeModal from './components/QRCodeModal';
 import Footer from './components/Footer';
 import AdminGalleryManager from './components/AdminGalleryManager';
+import GalleryFullPage from './components/GalleryFullPage';
 
 // Dữ liệu lời chúc ban đầu
 import { type GuestMessage } from './data/eventData';
@@ -42,6 +43,7 @@ export default function App() {
   // State quản lý danh sách lời chúc từ Supabase
   const [messages, setMessages] = useState<GuestMessage[]>([]);
   const [isAdminRoute, setIsAdminRoute] = useState(false);
+  const [isGalleryRoute, setIsGalleryRoute] = useState(false);
 
   // Tải lời chúc từ Supabase khi ứng dụng khởi chạy
   useEffect(() => {
@@ -72,13 +74,11 @@ export default function App() {
 
     fetchMessages();
 
-    // Check for admin route
+    // Check for admin/gallery route
     const checkHash = () => {
-      if (window.location.hash === '#admin') {
-        setIsAdminRoute(true);
-      } else {
-        setIsAdminRoute(false);
-      }
+      const hash = window.location.hash;
+      setIsAdminRoute(hash === '#admin');
+      setIsGalleryRoute(hash === '#gallery-all');
     };
     checkHash();
     window.addEventListener('hashchange', checkHash);
@@ -110,6 +110,10 @@ export default function App() {
 
   if (isAdminRoute) {
     return <AdminGalleryManager />;
+  }
+
+  if (isGalleryRoute) {
+    return <GalleryFullPage />;
   }
 
   return (

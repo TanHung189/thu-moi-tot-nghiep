@@ -1,13 +1,13 @@
-// Component Gallery - Bộ sưu tập ảnh kỷ niệm dạng Timeline với Infinite Scroll
+// Component Gallery - Bộ sưu tập ảnh kỷ niệm dạng Timeline (preview)
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Images, X, ChevronLeft, ChevronRight, Heart, MessageCircle, Send, Upload, Film } from 'lucide-react';
+import { Images, X, ChevronLeft, ChevronRight, Heart, MessageCircle, Send, Upload, Film, Link } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { vi } from 'date-fns/locale';
-import { useInView } from 'react-intersection-observer';
 import { useGallery, type GalleryPhoto, type PhotoComment } from '../hooks/useGallery';
+import { getEmbedUrl } from './AdminGalleryManager';
 
-// Component Lightbox - hiển thị ảnh phóng to và comments
+// ── Lightbox ──────────────────────────────────────────────────────────────────
 function Lightbox({
   images,
   currentIndex,
@@ -35,10 +35,8 @@ function Lightbox({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    // Khóa cuộn trang nền khi mở Lightbox
     const originalStyle = window.getComputedStyle(document.body).overflow;
     document.body.style.overflow = 'hidden';
-
     let isMounted = true;
     setLoadingComments(true);
     getComments(currentPhoto.id).then((data) => {
@@ -47,8 +45,8 @@ function Lightbox({
         setLoadingComments(false);
       }
     });
-    return () => { 
-      isMounted = false; 
+    return () => {
+      isMounted = false;
       document.body.style.overflow = originalStyle;
     };
   }, [currentPhoto.id, getComments]);
@@ -56,7 +54,6 @@ function Lightbox({
   const handleAddComment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newComment.trim() || !commentName.trim() || isSubmitting) return;
-
     setIsSubmitting(true);
     try {
       const added = await onAddComment(currentPhoto.id, commentName, newComment);
@@ -69,6 +66,39 @@ function Lightbox({
     }
   };
 
+  const renderLightboxMedia = () => {
+    if (currentPhoto.media_type === 'video') {
+      return (
+        <video
+          src={currentPhoto.image_url}
+          className="max-w-full max-h-full object-contain drop-shadow-lg"
+          controls autoPlay loop playsInline
+        />
+      );
+    }
+    if (currentPhoto.media_type === 'video_url') {
+      const { embedUrl, type } = getEmbedUrl(currentPhoto.image_url);
+      return type === 'direct' ? (
+        <video src={embedUrl} controls autoPlay loop playsInline className="max-w-full max-h-full object-contain" />
+      ) : (
+        <iframe
+          src={embedUrl}
+          className="w-full h-full"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+          title={currentPhoto.caption || 'Video'}
+        />
+      );
+    }
+    return (
+      <img
+        src={currentPhoto.image_url}
+        alt={currentPhoto.caption || 'Kỷ niệm'}
+        className="max-w-full max-h-full object-contain drop-shadow-lg"
+      />
+    );
+  };
+
   return (
     <AnimatePresence>
       <motion.div
@@ -79,8 +109,8 @@ function Lightbox({
         aria-modal="true"
       >
         <div className="flex flex-col lg:flex-row w-full max-w-6xl h-full max-h-[90vh] mx-4 bg-white rounded-xl overflow-hidden shadow-2xl relative">
-          
-          {/* Nút đóng cho Mobile & Desktop */}
+
+          {/* Nút đóng */}
           <button
             onClick={onClose}
             className="absolute top-4 right-4 z-50 bg-[#f4f4f4]/80 backdrop-blur-md rounded-full p-2 text-[#1a1a1a] hover:bg-[#bca374] hover:text-white transition-colors"
@@ -91,23 +121,7 @@ function Lightbox({
 
           {/* Phần Ảnh hoặc Video */}
           <div className="relative bg-black/5 flex items-center justify-center p-2 lg:p-8 h-[45vh] shrink-0 lg:h-auto lg:flex-1">
-            {currentPhoto.media_type === 'video' ? (
-              <video
-                src={currentPhoto.image_url}
-                className="max-w-full max-h-full object-contain drop-shadow-lg"
-                controls
-                autoPlay
-                loop
-                playsInline
-              />
-            ) : (
-              <img
-                src={currentPhoto.image_url}
-                alt={currentPhoto.caption || 'Kỷ niệm'}
-                className="max-w-full max-h-full object-contain drop-shadow-lg"
-              />
-            )}
-
+            {renderLightboxMedia()}
             <button onClick={onPrev} className="absolute left-2 lg:left-4 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-2 lg:p-3 hover:bg-[#bca374] hover:text-white transition-colors">
               <ChevronLeft className="w-5 h-5 lg:w-6 lg:h-6" strokeWidth={1.5} />
             </button>
@@ -116,14 +130,13 @@ function Lightbox({
             </button>
           </div>
 
-          {/* Phần Tương tác (Caption, Comments) */}
+          {/* Phần Tương tác */}
           <div className="flex-1 lg:w-[400px] flex flex-col bg-white border-l border-gray-100 min-h-0">
-            {/* Header: User / Tương tác */}
             <div className="p-4 border-b border-gray-100 flex items-center justify-between">
               <div className="font-semibold text-gray-800">
                 {currentPhoto.timeline_date ? format(parseISO(currentPhoto.timeline_date), 'dd MMMM, yyyy', { locale: vi }) : 'Kỷ niệm'}
               </div>
-              <button 
+              <button
                 onClick={() => onLike(currentPhoto.id)}
                 className="flex items-center gap-1.5 text-gray-500 hover:text-red-500 transition-colors"
               >
@@ -132,19 +145,16 @@ function Lightbox({
               </button>
             </div>
 
-            {/* Content (Caption + Comments list) */}
             <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
               {currentPhoto.caption && (
                 <div className="mb-6">
                   <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">{currentPhoto.caption}</p>
                 </div>
               )}
-
               <h4 className="text-sm font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                <MessageCircle className="w-4 h-4" /> 
+                <MessageCircle className="w-4 h-4" />
                 Bình luận ({currentPhoto.comments_count || 0})
               </h4>
-
               {loadingComments ? (
                 <div className="text-center text-sm text-gray-400 py-4">Đang tải...</div>
               ) : comments.length === 0 ? (
@@ -162,7 +172,6 @@ function Lightbox({
               )}
             </div>
 
-            {/* Comment Form */}
             <form onSubmit={handleAddComment} className="p-4 border-t border-gray-100 bg-gray-50/50">
               <input
                 type="text"
@@ -181,10 +190,10 @@ function Lightbox({
                   onChange={e => setNewComment(e.target.value)}
                   required
                 />
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   disabled={isSubmitting || !newComment.trim() || !commentName.trim()}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-[#bca374] disabled:opacity-50 hover:text-gold-600 transition-colors"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-[#bca374] disabled:opacity-50 transition-colors"
                 >
                   <Send className="w-4 h-4" />
                 </button>
@@ -197,16 +206,79 @@ function Lightbox({
   );
 }
 
-// Card hiển thị trên masonry grid
-function GalleryCard({ 
-  image, 
-  index, 
-  onClick 
-}: { 
-  image: GalleryPhoto; 
-  index: number; 
+// ── Card hiển thị trên masonry grid ──────────────────────────────────────────
+function GalleryCard({
+  image,
+  index,
+  onClick
+}: {
+  image: GalleryPhoto;
+  index: number;
   onClick: () => void;
 }) {
+  const renderMedia = () => {
+    if (image.media_type === 'video') {
+      return (
+        <>
+          <video
+            src={image.image_url}
+            className="w-full h-auto object-cover transition-all duration-700 group-hover:scale-105 rounded-lg"
+            muted
+            preload="metadata"
+            playsInline
+            loop
+            onMouseEnter={e => (e.currentTarget as HTMLVideoElement).play()}
+            onMouseLeave={e => {
+              const v = e.currentTarget as HTMLVideoElement;
+              v.pause();
+              v.currentTime = 0;
+            }}
+          />
+          <div className="absolute top-3 left-3 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded-md flex items-center gap-1 pointer-events-none">
+            <Film className="w-3 h-3" /> Video
+          </div>
+        </>
+      );
+    }
+    if (image.media_type === 'video_url') {
+      const { embedUrl, type } = getEmbedUrl(image.image_url);
+      const ytId = image.image_url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([-\w]{11})/)?.[1];
+      return (
+        <div className="relative w-full aspect-video bg-black rounded-lg overflow-hidden">
+          {ytId ? (
+            <img
+              src={`https://img.youtube.com/vi/${ytId}/mqdefault.jpg`}
+              alt={image.caption || 'Video'}
+              className="w-full h-full object-cover transition-all duration-700 group-hover:scale-105"
+            />
+          ) : (
+            <iframe
+              src={embedUrl}
+              className="w-full h-full pointer-events-none"
+              title={image.caption || 'Video'}
+            />
+          )}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-full bg-black/50 flex items-center justify-center">
+              <Film className="w-6 h-6 text-white" />
+            </div>
+          </div>
+          <div className="absolute top-3 left-3 bg-purple-600/90 text-white text-[10px] px-1.5 py-0.5 rounded-md flex items-center gap-1 pointer-events-none">
+            <Link className="w-3 h-3" /> {type === 'youtube' ? 'YouTube' : type === 'drive' ? 'Drive' : 'Video'}
+          </div>
+        </div>
+      );
+    }
+    return (
+      <img
+        src={image.image_url}
+        alt={image.caption || 'Kỷ niệm'}
+        className="w-full h-auto object-cover transition-all duration-700 filter group-hover:scale-105 rounded-lg"
+        loading="lazy"
+      />
+    );
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 30 }}
@@ -216,35 +288,7 @@ function GalleryCard({
       onClick={onClick}
     >
       <div className="relative w-full overflow-hidden border-[4px] border-white shadow-sm p-1 bg-white rounded-xl">
-        {image.media_type === 'video' ? (
-          <>
-            <video
-              src={image.image_url}
-              className="w-full h-auto object-cover transition-all duration-700 group-hover:scale-105 rounded-lg"
-              muted
-              preload="metadata"
-              playsInline
-              loop
-              onMouseEnter={e => (e.currentTarget as HTMLVideoElement).play()}
-              onMouseLeave={e => {
-                const v = e.currentTarget as HTMLVideoElement;
-                v.pause();
-                v.currentTime = 0;
-              }}
-            />
-            {/* Badge Video */}
-            <div className="absolute top-3 left-3 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded-md flex items-center gap-1 pointer-events-none">
-              <Film className="w-3 h-3" /> Video
-            </div>
-          </>
-        ) : (
-          <img
-            src={image.image_url}
-            alt={image.caption || 'Kỷ niệm'}
-            className="w-full h-auto object-cover transition-all duration-700 filter group-hover:scale-105 rounded-lg"
-            loading="lazy"
-          />
-        )}
+        {renderMedia()}
         {/* Overlay Hover */}
         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100 rounded-lg">
           <div className="flex items-center gap-4 text-white font-medium drop-shadow-md">
@@ -263,7 +307,7 @@ function GalleryCard({
   );
 }
 
-// Tạo identifier ngẫu nhiên (hoặc lấy từ localStorage) cho user
+// ── User identifier ───────────────────────────────────────────────────────────
 const getUserIdentifier = () => {
   let uid = localStorage.getItem('gallery_user_uid');
   if (!uid) {
@@ -273,23 +317,12 @@ const getUserIdentifier = () => {
   return uid;
 };
 
+// ── Main GallerySection ───────────────────────────────────────────────────────
 export default function GallerySection() {
   const userIdentifier = useMemo(() => getUserIdentifier(), []);
-  const { photos, loading, hasMore, fetchPhotos, toggleLike, addComment, getComments } = useGallery(userIdentifier);
-  
-  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
-  const [isExpanded, setIsExpanded] = useState(false);
-  
-  const { ref, inView } = useInView({
-    threshold: 0.1,
-    rootMargin: '400px',
-  });
+  const { photos, toggleLike, addComment, getComments } = useGallery(userIdentifier);
 
-  useEffect(() => {
-    if (inView && hasMore && !loading) {
-      fetchPhotos();
-    }
-  }, [inView, hasMore, loading, fetchPhotos]);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   const openLightbox = (index: number) => setLightboxIndex(index);
   const closeLightbox = () => setLightboxIndex(null);
@@ -304,17 +337,15 @@ export default function GallerySection() {
     setLightboxIndex((lightboxIndex + 1) % photos.length);
   };
 
-  // Group photos by Month-Year timeline
+  // Chỉ hiện 6 ảnh preview trên trang chủ, nhóm theo tháng
   const timelineGroups = useMemo(() => {
     const groups: { [key: string]: GalleryPhoto[] } = {};
-    const photosToGroup = isExpanded ? photos : photos.slice(0, 6);
-    
-    photosToGroup.forEach(photo => {
+    photos.slice(0, 6).forEach(photo => {
       const groupKey = photo.timeline_date ? photo.timeline_date.substring(0, 7) : 'Chưa phân loại';
       if (!groups[groupKey]) groups[groupKey] = [];
       groups[groupKey].push(photo);
     });
-    
+
     return Object.entries(groups)
       .sort((a, b) => {
         if (a[0] === 'Chưa phân loại') return 1;
@@ -329,17 +360,7 @@ export default function GallerySection() {
         }
         return { key, displayName, groupPhotos };
       });
-  // ✅ FIX: isExpanded phải nằm trong dependency array
-  }, [photos, isExpanded]);
-
-  // Khi người dùng bấm "Xem Tất Cả", nếu có thêm ảnh chưa load thì fetch luôn
-  const handleExpandAll = () => {
-    setIsExpanded(true);
-    if (hasMore && !loading) {
-      fetchPhotos();
-    }
-  };
-
+  }, [photos]);
 
   return (
     <section id="gallery" className="section-padding relative z-10 bg-slate-50/50">
@@ -364,9 +385,9 @@ export default function GallerySection() {
             Hành trình đại học qua những khung hình
           </p>
           <div className="flex justify-center">
-            <a 
-              href="#admin" 
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-white/50 hover:bg-white border border-[#bca374]/30 hover:border-[#bca374] rounded-full text-sm text-[#bca374] hover:text-gold-600 font-medium transition-all shadow-sm"
+            <a
+              href="#admin"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-white/50 hover:bg-white border border-[#bca374]/30 hover:border-[#bca374] rounded-full text-sm text-[#bca374] font-medium transition-all shadow-sm"
               aria-label="Đi đến trang Quản trị để tải lên ảnh"
             >
               <Upload className="w-4 h-4" />
@@ -375,14 +396,14 @@ export default function GallerySection() {
           </div>
         </motion.div>
 
-        {photos.length === 0 && !loading && (
+        {photos.length === 0 && (
           <div className="text-center py-20 text-gray-500 bg-white rounded-2xl border border-gray-100 shadow-sm">
             <Images className="w-12 h-12 text-gray-300 mx-auto mb-4" />
             <p>Chưa có hình ảnh nào trong bộ sưu tập.</p>
           </div>
         )}
 
-        {/* Timeline View */}
+        {/* Timeline View - preview 6 ảnh */}
         <div className="space-y-16">
           {timelineGroups.map(({ key, displayName, groupPhotos }) => (
             <div key={key} className="relative">
@@ -396,7 +417,6 @@ export default function GallerySection() {
               {/* Masonry Grid */}
               <div className="columns-1 sm:columns-2 lg:columns-3 gap-4 space-y-4">
                 {groupPhotos.map((photo) => {
-                  // Find global index for lightbox
                   const globalIndex = photos.findIndex(p => p.id === photo.id);
                   return (
                     <GalleryCard
@@ -412,40 +432,17 @@ export default function GallerySection() {
           ))}
         </div>
 
-        {/* Infinite Scroll trigger or View All button */}
-        {!isExpanded && photos.length > 0 ? (
+        {/* Nút Xem Tất Cả → chuyển sang trang gallery riêng */}
+        {photos.length > 0 && (
           <div className="w-full py-8 flex justify-center mt-4">
             <button
-              onClick={handleExpandAll}
-              className="px-8 py-3 bg-[#bca374] text-white rounded-full font-medium hover:bg-[#a08950] transition-colors shadow-lg hover:shadow-xl"
+              onClick={() => { window.location.hash = '#gallery-all'; }}
+              className="px-8 py-3.5 bg-[#bca374] text-white rounded-full font-medium hover:bg-[#a08950] transition-all shadow-lg hover:shadow-xl flex items-center gap-2"
             >
-              Xem Tất Cả Kỷ Niệm ({photos.length}+)
+              <Images className="w-4 h-4" />
+              Xem Tất Cả Kỷ Niệm
+              <span className="bg-white/20 px-2 py-0.5 rounded-full text-xs">{photos.length}+</span>
             </button>
-          </div>
-        ) : (
-          <div className="w-full flex flex-col items-center gap-4 mt-8">
-            {/* Infinite scroll sentinel */}
-            <div ref={ref} className="w-full flex justify-center py-4">
-              {loading && (
-                <div className="flex flex-col items-center gap-2">
-                  <div className="w-8 h-8 border-4 border-[#bca374]/30 border-t-[#bca374] rounded-full animate-spin"></div>
-                  <span className="text-sm text-gray-500 font-medium tracking-wide">Đang tải thêm kỷ niệm...</span>
-                </div>
-              )}
-            </div>
-            {/* Nút Thu Gọn - chỉ hiện khi không còn đang tải */}
-            {!loading && (
-              <button
-                onClick={() => {
-                  setIsExpanded(false);
-                  // Cuộn lên phần gallery để tránh lạc chỗ
-                  document.getElementById('gallery')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }}
-                className="flex items-center gap-2 px-6 py-2.5 bg-white border border-[#bca374]/40 text-[#bca374] rounded-full font-medium hover:bg-[#bca374] hover:text-white transition-all shadow-sm text-sm"
-              >
-                ↑ Thu Gọn
-              </button>
-            )}
           </div>
         )}
       </div>

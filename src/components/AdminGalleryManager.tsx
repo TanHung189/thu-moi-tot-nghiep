@@ -50,6 +50,22 @@ const isVideoUrl = (url: string) => {
   return ['mp4', 'webm', 'mov', 'avi', 'mkv'].includes(ext || '');
 };
 
+// ─── Parse YouTube / Google Drive URL thành embed URL ───
+export function getEmbedUrl(url: string): { embedUrl: string; type: 'youtube' | 'drive' | 'direct' } {
+  // YouTube: watch?v=ID hoặc youtu.be/ID
+  const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([\w-]{11})/);
+  if (ytMatch) {
+    return { embedUrl: `https://www.youtube.com/embed/${ytMatch[1]}?autoplay=0&rel=0`, type: 'youtube' };
+  }
+  // Google Drive: /file/d/ID/view
+  const driveMatch = url.match(/drive\.google\.com\/file\/d\/([\w-]+)/);
+  if (driveMatch) {
+    return { embedUrl: `https://drive.google.com/file/d/${driveMatch[1]}/preview`, type: 'drive' };
+  }
+  // Link video trực tiếp
+  return { embedUrl: url, type: 'direct' };
+}
+
 export default function AdminGalleryManager() {
   const [isAuthenticated, setIsAuthenticated] = useState(true);
   const [password, setPassword] = useState('');
@@ -70,6 +86,14 @@ export default function AdminGalleryManager() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
 
+  // ── Video URL Modal ──────────────────────────────────────────
+  const [showUrlModal, setShowUrlModal] = useState(false);
+  const [videoUrl, setVideoUrl] = useState('');
+  const [videoUrlDate, setVideoUrlDate] = useState(new Date().toISOString().split('T')[0]);
+  const [videoUrlCaption, setVideoUrlCaption] = useState('');
+  const [isAddingUrl, setIsAddingUrl] = useState(false);
+  const [urlPreview, setUrlPreview] = useState<{ embedUrl: string; type: string } | null>(null);
+
   const ADMIN_PASS = import.meta.env.VITE_ADMIN_PASSWORD || '123456';
 
   const handleLogin = (e: React.FormEvent) => {
@@ -79,6 +103,52 @@ export default function AdminGalleryManager() {
       setLoginError('');
     } else {
       setLoginError('Mật khẩu không đúng!');
+    }
+  };
+
+  // ── Thêm video qua link ────────────────────────────────
+  const handleVideoUrlChange = (val: string) => {
+    setVideoUrl(val);
+    if (val.trim()) {
+      const parsed = getEmbedUrl(val.trim());
+      setUrlPreview(parsed);
+    } else {
+      setUrlPreview(null);
+    }
+  };
+
+  const handleAddVideoUrl = async () => {
+    if (!videoUrl.trim()) return;
+    setIsAddingUrl(true);
+    try {
+      const { data: dbData, error: dbError } = await supabase
+        .from('gallery_photos')
+        .insert([{
+          image_url: videoUrl.trim(),  // Lưu URL gốc
+          caption: videoUrlCaption.trim(),
+          timeline_date: videoUrlDate,
+          media_type: 'video_url',
+        }])
+        .select()
+        .single();
+
+      if (dbError) throw dbError;
+
+      if (dbData) {
+        setPhotos(prev => [dbData as GalleryPhoto, ...prev]);
+      }
+      // Reset modal
+      setShowUrlModal(false);
+      setVideoUrl('');
+      setVideoUrlCaption('');
+      setVideoUrlDate(new Date().toISOString().split('T')[0]);
+      setUrlPreview(null);
+      alert('✅ Đã thêm video thành công!');
+    } catch (err: any) {
+      console.error('Lỗi thêm video URL:', err);
+      alert('Lỗi: ' + (err?.message || 'Không thể thêm video'));
+    } finally {
+      setIsAddingUrl(false);
     }
   };
 
@@ -388,25 +458,136 @@ export default function AdminGalleryManager() {
               {selectMode ? 'Đang chọn' : 'Chọn nhiều'}
             </button>
 
-            <button 
+            <button
+              onClick={() => setShowUrlModal(true)}
+              disabled={selectMode}
+              className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2.5 rounded-lg flex items-center gap-2 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Thêm video YouTube / Google Drive"
+            >
+              <Film className="w-4 h-4" />
+              + Link Video
+            </button>
+
+            <button
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading || selectMode}
               className="bg-[#1a1a1a] hover:bg-gray-800 text-white px-5 py-2.5 rounded-lg flex items-center gap-2 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Upload className="w-4 h-4" />
-              Upload Ảnh / Video
+              Upload Ảnh
             </button>
-            <input 
-              type="file" 
-              multiple 
-              accept="image/*,video/*" 
-              className="hidden" 
+            <input
+              type="file"
+              multiple
+              accept="image/*,video/mp4,video/webm"
+              className="hidden"
               ref={fileInputRef}
               onChange={handleFileUpload}
             />
           </div>
         </div>
       </header>
+
+      {/* ── Video URL Modal ─────────────────────────────── */}
+      {showUrlModal && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" onClick={(e) => e.target === e.currentTarget && setShowUrlModal(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden">
+            <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-purple-50">
+              <h3 className="font-bold text-gray-800 flex items-center gap-2">
+                <Film className="w-5 h-5 text-purple-600" />
+                Thêm Video qua Link
+              </h3>
+              <button onClick={() => setShowUrlModal(false)}><X className="w-5 h-5 text-gray-400 hover:text-gray-600" /></button>
+            </div>
+
+            <div className="p-5 space-y-4">
+              {/* Hướng dẫn */}
+              <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 text-sm text-purple-800">
+                <p className="font-semibold mb-1">📹 Dành cho video lớn (&gt; 50MB):</p>
+                <ul className="space-y-0.5 text-xs list-disc list-inside">
+                  <li><strong>YouTube:</strong> Đăng video (chế độ Không công khai) → Copy link</li>
+                  <li><strong>Google Drive:</strong> Upload → Chia sẻ (Ai có link) → Copy link</li>
+                </ul>
+              </div>
+
+              {/* URL Input */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Link video *</label>
+                <input
+                  type="url"
+                  placeholder="https://youtu.be/... hoặc https://drive.google.com/..."
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500"
+                  value={videoUrl}
+                  onChange={e => handleVideoUrlChange(e.target.value)}
+                  autoFocus
+                />
+                {urlPreview && (
+                  <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
+                    ✓ Phát hiện: {urlPreview.type === 'youtube' ? 'YouTube' : urlPreview.type === 'drive' ? 'Google Drive' : 'Link trực tiếp'}
+                  </p>
+                )}
+              </div>
+
+              {/* Preview */}
+              {urlPreview && (
+                <div className="rounded-lg overflow-hidden border border-gray-200 bg-black aspect-video">
+                  {urlPreview.type === 'direct' ? (
+                    <video src={urlPreview.embedUrl} controls className="w-full h-full" />
+                  ) : (
+                    <iframe
+                      src={urlPreview.embedUrl}
+                      className="w-full h-full"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      title="Video preview"
+                    />
+                  )}
+                </div>
+              )}
+
+              {/* Ngày */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Ngày quảy / sự kiện</label>
+                <input
+                  type="date"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-purple-500"
+                  value={videoUrlDate}
+                  onChange={e => setVideoUrlDate(e.target.value)}
+                />
+              </div>
+
+              {/* Caption */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Mô tả (tùy chọn)</label>
+                <input
+                  type="text"
+                  placeholder="Ví dụ: Lễ tốt nghiệp đại học..."
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-purple-500"
+                  value={videoUrlCaption}
+                  onChange={e => setVideoUrlCaption(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-end gap-3">
+              <button
+                onClick={() => setShowUrlModal(false)}
+                className="px-4 py-2 text-gray-600 font-medium hover:bg-gray-200 rounded-lg transition-colors text-sm"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleAddVideoUrl}
+                disabled={!videoUrl.trim() || isAddingUrl}
+                className="px-6 py-2 bg-purple-600 text-white font-medium hover:bg-purple-700 rounded-lg transition-colors disabled:opacity-50 text-sm flex items-center gap-2"
+              >
+                {isAddingUrl && <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
+                Thêm Video
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Multi-select Toolbar ──────────────────────────────── */}
       {selectMode && (

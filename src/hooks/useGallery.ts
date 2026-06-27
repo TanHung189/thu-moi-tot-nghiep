@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabaseClient';
 export interface GalleryPhoto {
   id: string;
   image_url: string;
-  media_type?: 'image' | 'video'; // phân biệt ảnh và video
+  media_type?: 'image' | 'video' | 'video_url'; // image, video upload, hoặc video link (YouTube/Drive)
   caption: string | null;
   timeline_date: string; // YYYY-MM-DD
   created_at: string;
