@@ -214,7 +214,7 @@ function PhotoCard({ photo, index, onClick }: { photo: GalleryPhoto; index: numb
     if (photo.media_type === 'video') {
       return (
         <video
-          src={photo.image_url}
+          src={`${photo.image_url}#t=0.001`}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           muted preload="metadata" playsInline
           onMouseEnter={e => (e.currentTarget as HTMLVideoElement).play()}
@@ -226,11 +226,19 @@ function PhotoCard({ photo, index, onClick }: { photo: GalleryPhoto; index: numb
       );
     }
     if (photo.media_type === 'video_url') {
-      const ytId = photo.image_url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([-\w]{11})/)?.[1];
+      const ytId = photo.image_url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([-\w]{11})/)?.[1];
+      const driveId = photo.image_url.match(/drive\.google\.com\/file\/d\/([\w-]+)/)?.[1];
       const { embedUrl } = getEmbedUrl(photo.image_url);
+      
       return ytId ? (
         <img
           src={`https://img.youtube.com/vi/${ytId}/mqdefault.jpg`}
+          alt={photo.caption || 'Video'}
+          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+        />
+      ) : driveId ? (
+        <img
+          src={`https://drive.google.com/thumbnail?id=${driveId}&sz=w800`}
           alt={photo.caption || 'Video'}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         />

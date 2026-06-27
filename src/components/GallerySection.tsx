@@ -221,7 +221,7 @@ function GalleryCard({
       return (
         <>
           <video
-            src={image.image_url}
+            src={`${image.image_url}#t=0.001`}
             className="w-full h-auto object-cover transition-all duration-700 group-hover:scale-105 rounded-lg"
             muted
             preload="metadata"
@@ -242,12 +242,20 @@ function GalleryCard({
     }
     if (image.media_type === 'video_url') {
       const { embedUrl, type } = getEmbedUrl(image.image_url);
-      const ytId = image.image_url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([-\w]{11})/)?.[1];
+      const ytId = image.image_url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([-\w]{11})/)?.[1];
+      const driveId = image.image_url.match(/drive\.google\.com\/file\/d\/([\w-]+)/)?.[1];
+      
       return (
         <div className="relative w-full aspect-video bg-black rounded-lg overflow-hidden">
           {ytId ? (
             <img
               src={`https://img.youtube.com/vi/${ytId}/mqdefault.jpg`}
+              alt={image.caption || 'Video'}
+              className="w-full h-full object-cover transition-all duration-700 group-hover:scale-105"
+            />
+          ) : driveId ? (
+            <img
+              src={`https://drive.google.com/thumbnail?id=${driveId}&sz=w800`}
               alt={image.caption || 'Video'}
               className="w-full h-full object-cover transition-all duration-700 group-hover:scale-105"
             />
